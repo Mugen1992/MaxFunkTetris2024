@@ -1,0 +1,14 @@
+C:\Users\Max\source\repos\MaxFunkTetris2024\bin\Debug\net8.0\MaxFunkTetris2024.exe
+C:\Users\Max\source\repos\MaxFunkTetris2024\bin\Debug\net8.0\MaxFunkTetris2024.deps.json
+C:\Users\Max\source\repos\MaxFunkTetris2024\bin\Debug\net8.0\MaxFunkTetris2024.runtimeconfig.json
+C:\Users\Max\source\repos\MaxFunkTetris2024\bin\Debug\net8.0\MaxFunkTetris2024.dll
+C:\Users\Max\source\repos\MaxFunkTetris2024\bin\Debug\net8.0\MaxFunkTetris2024.pdb
+C:\Users\Max\source\repos\MaxFunkTetris2024\obj\Debug\net8.0\MaxFunkTetris2024.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Max\source\repos\MaxFunkTetris2024\obj\Debug\net8.0\MaxFunkTetris2024.AssemblyInfoInputs.cache
+C:\Users\Max\source\repos\MaxFunkTetris2024\obj\Debug\net8.0\MaxFunkTetris2024.AssemblyInfo.cs
+C:\Users\Max\source\repos\MaxFunkTetris2024\obj\Debug\net8.0\MaxFunkTetris2024.csproj.CoreCompileInputs.cache
+C:\Users\Max\source\repos\MaxFunkTetris2024\obj\Debug\net8.0\MaxFunkTetris2024.dll
+C:\Users\Max\source\repos\MaxFunkTetris2024\obj\Debug\net8.0\refint\MaxFunkTetris2024.dll
+C:\Users\Max\source\repos\MaxFunkTetris2024\obj\Debug\net8.0\MaxFunkTetris2024.pdb
+C:\Users\Max\source\repos\MaxFunkTetris2024\obj\Debug\net8.0\MaxFunkTetris2024.genruntimeconfig.cache
+C:\Users\Max\source\repos\MaxFunkTetris2024\obj\Debug\net8.0\ref\MaxFunkTetris2024.dll
