@@ -20,14 +20,14 @@ namespace MaxFunkTetris2024
 
         public class Tetromino
         {
-            // Форма тетромино, представленная двумерным массивом
+            // Форма тетрамино, представленная двумерным массивом
             public int[,] Shape { get; private set; }
 
-            // Координаты левого верхнего угла тетромино на игровом поле
+            // Координаты левого верхнего угла тетрамино на игровом поле
             public int X { get; set; }
             public int Y { get; set; }
 
-            // Статический массив, содержащий все возможные формы тетромино
+            // Статический массив, содержащий все возможные формы тетрамино
             private static readonly int[][,] Shapes = new int[][,]
             {
         new int[,] { { 1, 1 }, { 1, 1 } },  // O-форма
@@ -39,18 +39,18 @@ namespace MaxFunkTetris2024
         new int[,] { { 0, 1, 0 }, { 1, 1, 1 } }   // T-форма
             };
 
-            // Конструктор, создающий новый тетромино
+            // Конструктор, создающий новый тетрамино
             public Tetromino(int shapeIndex)
             {
                 // Копируем форму из статического массива
                 Shape = (int[,])Shapes[shapeIndex].Clone();
 
-                // Устанавливаем начальную позицию тетромино в верхней части поля
+                // Устанавливаем начальную позицию тетрамино в верхней части поля
                 X = 5 - Shape.GetLength(1) / 2;
                 Y = 0;
             }
 
-            // Метод для вращения тетромино
+            // Метод для вращения тетрамино
             public void Rotate()
             {
                 // Создаем новый массив с инвертированными размерами
@@ -83,7 +83,7 @@ namespace MaxFunkTetris2024
                 Grid = new int[height, width];
             }
 
-            // Метод для проверки столкновения тетромино с границами поля или другими блоками
+            // Метод для проверки столкновения тетрамино с границами поля или другими блоками
             public bool IsCollision(Tetromino tetromino)
             {
                 for (int i = 0; i < tetromino.Shape.GetLength(0); i++)
@@ -103,7 +103,7 @@ namespace MaxFunkTetris2024
                 return false;
             }
 
-            // Метод для слияния тетромино с игровым полем
+            // Метод для слияния тетрамино с игровым полем
             public void MergeTetromino(Tetromino tetromino)
             {
                 for (int i = 0; i < tetromino.Shape.GetLength(0); i++)
@@ -179,7 +179,7 @@ namespace MaxFunkTetris2024
                     for (int x = 0; x < board.Width; x++)
                     {
                         bool isTetromino = false;
-                        // Проверяем, находится ли текущий тетромино в этой позиции
+                        // Проверяем, находится ли текущий тетрамино в этой позиции
                         if (currentTetromino != null)
                         {
                             for (int i = 0; i < currentTetromino.Shape.GetLength(0); i++)
@@ -240,10 +240,10 @@ namespace MaxFunkTetris2024
                         HandleInput(key);
                     }
 
-                    // Двигаем тетромино вниз
+                    // Двигаем тетрамино вниз
                     if (!MoveTetrominoDown())
                     {
-                        // Если движение вниз невозможно, фиксируем тетромино
+                        // Если движение вниз невозможно, фиксируем тетрамино
                         board.MergeTetromino(currentTetromino);
                         board.ClearLines();
                         if (!SpawnNewTetromino())
@@ -278,14 +278,14 @@ namespace MaxFunkTetris2024
                 }
             }
 
-            // Метод для перемещения тетромино
+            // Метод для перемещения тетрамино
             private bool MoveTetromino(int dx, int dy)
             {
                 currentTetromino.X += dx;
                 currentTetromino.Y += dy;
                 if (board.IsCollision(currentTetromino))
                 {
-                    // Если произошло столкновение, возвращаем тетромино на прежнее место
+                    // Если произошло столкновение, возвращаем тетрамино на прежнее место
                     currentTetromino.X -= dx;
                     currentTetromino.Y -= dy;
                     return false;
@@ -293,13 +293,13 @@ namespace MaxFunkTetris2024
                 return true;
             }
 
-            // Метод для перемещения тетромино вниз
+            // Метод для перемещения тетрамино вниз
             private bool MoveTetrominoDown()
             {
                 return MoveTetromino(0, 1);
             }
 
-            // Метод для вращения тетромино
+            // Метод для вращения тетрамино
             private void RotateTetromino()
             {
                 currentTetromino.Rotate();
@@ -307,7 +307,7 @@ namespace MaxFunkTetris2024
                     currentTetromino.Rotate(); // Поворачиваем обратно, если произошло столкновение
             }
 
-            // Метод для создания нового тетромино
+            // Метод для создания нового тетрамино
             private bool SpawnNewTetromino()
             {
                 currentTetromino = new Tetromino(random.Next(7));
