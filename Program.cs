@@ -217,13 +217,142 @@ namespace MaxFunkTetris2024
 
         public static class UiLayout
         {
-            // Базовые смещения поля, чтобы оставить рамку слева и сверху
-            public const int BoardOffsetX = 2;
+            // Базовые размеры и смещения элементов интерфейса
+            public const int LeftPanelX = 1;
+            public const int LeftPanelY = 1;
+            public const int LeftPanelWidth = 16;
+            public const int LeftPanelHeight = 9;
+
+            public const int BoardOffsetX = LeftPanelX + LeftPanelWidth + 3;
             public const int BoardOffsetY = 1;
 
-            // Смещение панели статистики отрисовываем от правого края поля
-            public static int GetStatsOffsetX(int boardWidth) => BoardOffsetX + boardWidth + 4;
-            public static int StatsOffsetY => BoardOffsetY;
+            public const int PanelPadding = 3;
+            public const int RightPanelWidth = 28;
+            public const int RightPanelHeight = 9;
+
+            // Координаты подписей статистики
+            public static int StatsLabelX => LeftPanelX + 2;
+            public static int StatsValueX => LeftPanelX + LeftPanelWidth - 7; // Сдвигаем левее, чтобы 6-значные числа не затирали рамку
+            public static int ScoreLabelY => LeftPanelY + 2;
+            public static int LevelLabelY => LeftPanelY + 3;
+            public static int LinesLabelY => LeftPanelY + 4;
+
+            // Координаты панелей, зависящие от ширины поля
+            public static int GetInfoPanelX(int boardWidth) => BoardOffsetX + boardWidth + PanelPadding;
+            public static int InfoPanelY => LeftPanelY;
+        }
+
+        public static class UiTheme
+        {
+            // Символы рамки
+            public const char HorizontalBorder = '─';
+            public const char VerticalBorder = '│';
+            public const char CornerTopLeft = '┌';
+            public const char CornerTopRight = '┐';
+            public const char CornerBottomLeft = '└';
+            public const char CornerBottomRight = '┘';
+
+            // Цвета элементов интерфейса
+            public const ConsoleColor FrameColor = ConsoleColor.DarkGray;
+            public const ConsoleColor LabelColor = ConsoleColor.Gray;
+            public const ConsoleColor ValueColor = ConsoleColor.Cyan;
+            public const ConsoleColor InfoColor = ConsoleColor.White;
+        }
+
+        public static class UiFrameRenderer
+        {
+            // Универсальный метод для рисования прямоугольной рамки
+            public static void DrawBox(int x, int y, int width, int height, string title = "")
+            {
+                // Сохраняем текущий цвет, чтобы вернуть его после отрисовки
+                ConsoleColor previousColor = Console.ForegroundColor;
+                Console.ForegroundColor = UiTheme.FrameColor;
+
+                // Верхняя грань
+                Console.SetCursorPosition(x, y);
+                Console.Write(UiTheme.CornerTopLeft);
+                Console.Write(new string(UiTheme.HorizontalBorder, width - 2));
+                Console.Write(UiTheme.CornerTopRight);
+
+                // Боковые грани
+                for (int i = 1; i < height - 1; i++)
+                {
+                    Console.SetCursorPosition(x, y + i);
+                    Console.Write(UiTheme.VerticalBorder);
+                    Console.SetCursorPosition(x + width - 1, y + i);
+                    Console.Write(UiTheme.VerticalBorder);
+                }
+
+                // Нижняя грань
+                Console.SetCursorPosition(x, y + height - 1);
+                Console.Write(UiTheme.CornerBottomLeft);
+                Console.Write(new string(UiTheme.HorizontalBorder, width - 2));
+                Console.Write(UiTheme.CornerBottomRight);
+
+                // Заголовок рисуем один раз поверх рамки
+                if (!string.IsNullOrWhiteSpace(title))
+                {
+                    Console.SetCursorPosition(x + 2, y);
+                    Console.ForegroundColor = UiTheme.LabelColor;
+                    Console.Write(title);
+                }
+
+                Console.ForegroundColor = previousColor;
+            }
+
+            // Рисуем все статические рамки и подписи экранов во время игры
+            public static void DrawStaticFrame(int boardWidth, int boardHeight)
+            {
+                Console.Clear();
+
+                // Рисуем рамку вокруг игрового поля
+                DrawBox(UiLayout.BoardOffsetX - 1, UiLayout.BoardOffsetY - 1, boardWidth + 2, boardHeight + 2, " FIELD ");
+
+                // Левая панель статистики
+                DrawBox(UiLayout.LeftPanelX, UiLayout.LeftPanelY, UiLayout.LeftPanelWidth, UiLayout.LeftPanelHeight, " STATS ");
+                ConsoleColor previousColor = Console.ForegroundColor;
+                Console.ForegroundColor = UiTheme.LabelColor;
+                Console.SetCursorPosition(UiLayout.StatsLabelX, UiLayout.ScoreLabelY);
+                Console.Write("Score:");
+                Console.SetCursorPosition(UiLayout.StatsLabelX, UiLayout.LevelLabelY);
+                Console.Write("Level:");
+                Console.SetCursorPosition(UiLayout.StatsLabelX, UiLayout.LinesLabelY);
+                Console.Write("Lines:");
+
+                // Правая панель информации
+                int infoPanelX = UiLayout.GetInfoPanelX(boardWidth);
+                DrawBox(infoPanelX, UiLayout.InfoPanelY, UiLayout.RightPanelWidth, UiLayout.RightPanelHeight, " INFO ");
+                Console.ForegroundColor = UiTheme.InfoColor;
+                Console.SetCursorPosition(infoPanelX + 2, UiLayout.InfoPanelY + 2);
+                Console.Write("←/→ — движение");
+                Console.SetCursorPosition(infoPanelX + 2, UiLayout.InfoPanelY + 3);
+                Console.Write("↓ — ускорение падения");
+                Console.SetCursorPosition(infoPanelX + 2, UiLayout.InfoPanelY + 4);
+                Console.Write("↑ — вращение фигуры");
+
+                Console.ForegroundColor = previousColor;
+            }
+        }
+
+        public static class UiStatsRenderer
+        {
+            // Обновляем только числовые значения статистики, подписи остаются статичными
+            public static void RenderStats(int score, int level, int lines)
+            {
+                ConsoleColor previousColor = Console.ForegroundColor;
+                Console.ForegroundColor = UiTheme.ValueColor;
+
+                Console.SetCursorPosition(UiLayout.StatsValueX, UiLayout.ScoreLabelY);
+                Console.Write($"{score,6}");
+
+                Console.SetCursorPosition(UiLayout.StatsValueX, UiLayout.LevelLabelY);
+                Console.Write($"{level,6}");
+
+                Console.SetCursorPosition(UiLayout.StatsValueX, UiLayout.LinesLabelY);
+                Console.Write($"{lines,6}");
+
+                Console.ForegroundColor = previousColor;
+            }
         }
 
         public class Game
@@ -234,9 +363,12 @@ namespace MaxFunkTetris2024
             private int _score;
             private int _tick; // Счётчик кадров для управления падением
             private int _dropInterval = 6; // Интервал падения фигуры в кадрах
+            private int _linesCleared; // Общее количество убранных линий для статистики
             private readonly int _width;
             private readonly int _height;
             private GameState _state;
+
+            private int CurrentLevel => Math.Max(1, _linesCleared / 10 + 1);
 
             public Game(int width, int height)
             {
@@ -254,6 +386,7 @@ namespace MaxFunkTetris2024
                 currentTetromino = CreateNewTetromino();
                 _score = 0;
                 _tick = 0; // Обнуляем счётчик кадров при запуске новой игры
+                _linesCleared = 0;
             }
 
             // Фабрика для создания случайного тетрамино
@@ -350,6 +483,7 @@ namespace MaxFunkTetris2024
                 {
                     ResetGame();
                     _state = GameState.Playing;
+                    UiFrameRenderer.DrawStaticFrame(board.Width, board.Height); // Рисуем статический каркас при входе в игру
                 }
                 else if (key == ConsoleKey.D2 || key == ConsoleKey.NumPad2)
                 {
@@ -419,7 +553,10 @@ namespace MaxFunkTetris2024
                     board.MergeTetromino(currentTetromino);
                     int clearedLines = board.ClearLines();
                     if (clearedLines > 0)
+                    {
+                        _linesCleared += clearedLines;
                         _score += clearedLines * 100; // Начисляем очки за линии
+                    }
 
                     if (!SpawnNewTetromino())
                         _state = GameState.GameOver; // Переход в Game Over при невозможности спавна
@@ -441,6 +578,8 @@ namespace MaxFunkTetris2024
             // Отрисовка меню: заголовок и пункты выбора
             private void RenderMainMenu()
             {
+                Console.Clear(); // Полностью очищаем экран, чтобы меню не тонуло в старом выводе
+                Console.ResetColor();
                 Console.SetCursorPosition(0, 0); // Перемещаем курсор в начало для уменьшения мерцания
                 Console.WriteLine("=== MaxFunkTetris2024 ===");
                 Console.WriteLine();
@@ -454,14 +593,7 @@ namespace MaxFunkTetris2024
             private void RenderPlaying()
             {
                 GameRenderer.Render(board, currentTetromino);
-                int statsX = UiLayout.GetStatsOffsetX(board.Width);
-
-                // Отрисовываем статистику рядом с полем с учётом смещений, затирая старые символы пробелами
-                Console.SetCursorPosition(statsX, UiLayout.StatsOffsetY);
-                Console.Write($"Очки: {_score}     ");
-
-                Console.SetCursorPosition(statsX, UiLayout.StatsOffsetY + 1);
-                Console.Write("Управление: ← → для движения, ↑ для вращения, ↓ для ускорения.   ");
+                UiStatsRenderer.RenderStats(_score, CurrentLevel, _linesCleared);
             }
 
             // Отрисовка паузы пока оставляем пустой
@@ -473,7 +605,9 @@ namespace MaxFunkTetris2024
             // Отрисовка экрана завершения игры
             private void RenderGameOver()
             {
-                Console.SetCursorPosition(0, 0); // Обновляем текст без полной очистки экрана
+                Console.Clear(); // Очищаем экран, чтобы текст Game Over не перекрывался старым полем
+                Console.ResetColor();
+                Console.SetCursorPosition(0, 0); // Позиционируем курсор в начало после очистки
                 Console.WriteLine("Game Over");
                 Console.WriteLine($"Итоговый счёт: {_score}");
                 Console.WriteLine();
