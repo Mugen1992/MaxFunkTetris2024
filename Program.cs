@@ -51,6 +51,20 @@ namespace MaxFunkTetris2024
                 Y = 0;
             }
 
+            // Сохраняем снимок текущей формы и координат, чтобы можно было вернуть состояние
+            public (int[,] shape, int x, int y) SaveState()
+            {
+                return ((int[,])Shape.Clone(), X, Y);
+            }
+
+            // Возвращаем ранее сохранённую форму и позицию
+            public void RestoreState(int[,] shape, int x, int y)
+            {
+                Shape = shape;
+                X = x;
+                Y = y;
+            }
+
             // Метод для вращения тетрамино
             public void Rotate()
             {
@@ -638,9 +652,15 @@ namespace MaxFunkTetris2024
             // Метод для вращения тетрамино
             private void RotateTetromino()
             {
+                // Сохраняем форму и координаты перед попыткой вращения
+                var savedState = currentTetromino.SaveState();
+
                 currentTetromino.Rotate();
                 if (board.IsCollision(currentTetromino))
-                    currentTetromino.Rotate(); // Поворачиваем обратно, если произошло столкновение
+                {
+                    // Возвращаем сохранённое состояние вместо повторного вращения
+                    currentTetromino.RestoreState(savedState.shape, savedState.x, savedState.y);
+                }
             }
 
             // Метод для создания нового тетромино
