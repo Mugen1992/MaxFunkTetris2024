@@ -2,20 +2,21 @@
 
 namespace MaxFunkTetris2024
 {
+    // Состояния игры для управления основными экранами
+    public enum GameState
+    {
+        MainMenu,
+        Playing,
+        Paused,
+        GameOver
+    }
+
     internal class Program
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Welcome to Console Tetris!");
-            Console.WriteLine("Use the arrow keys to control the tetrominoes.");
-            Console.WriteLine("Press any key to start...");
-            Console.ReadKey(true);
-
             Game game = new Game(15, 20);
             game.Run();
-
-            Console.WriteLine("Press any key to exit...");
-            Console.ReadKey(true);
         }
 
         public class Tetromino
@@ -121,18 +122,21 @@ namespace MaxFunkTetris2024
                 }
             }
 
-            // Метод для очистки заполненных линий
-            public void ClearLines()
+            // Метод для очистки заполненных линий и возврата количества очищенных строк
+            public int ClearLines()
             {
+                int clearedLines = 0;
                 for (int y = Height - 1; y >= 0; y--)
                 {
                     if (IsLineFull(y))
                     {
                         ClearLine(y);
                         ShiftLinesDown(y);
+                        clearedLines++;
                         y++; // Проверяем ту же строку снова, так как все опустилось
                     }
                 }
+                return clearedLines;
             }
 
             // Метод для проверки, заполнена ли линия
@@ -212,55 +216,134 @@ namespace MaxFunkTetris2024
             private GameBoard board;
             private Tetromino currentTetromino;
             private Random random;
+            private int _score;
+            private readonly int _width;
+            private readonly int _height;
+            private GameState _state;
 
             public Game(int width, int height)
             {
-                board = new GameBoard(width, height);
+                _width = width;
+                _height = height;
                 random = new Random();
-                currentTetromino = CreateNewTetromino(); // Инициализируем здесь
+                _state = GameState.MainMenu; // Запуск с главного меню
+                ResetGame();
             }
 
+            // Метод для сброса игры и подготовки нового запуска
+            private void ResetGame()
+            {
+                board = new GameBoard(_width, _height);
+                currentTetromino = CreateNewTetromino();
+                _score = 0;
+            }
+
+            // Фабрика для создания случайного тетрамино
             private Tetromino CreateNewTetromino()
             {
                 return new Tetromino(random.Next(7));
             }
 
-            // Основной игровой цикл
+            // Основной игровой цикл со стейт-машиной
             public void Run()
             {
                 while (true)
                 {
-                    // Отрисовываем текущее состояние игры
-                    GameRenderer.Render(board, currentTetromino);
-
-                    // Обрабатываем ввод пользователя
-                    if (Console.KeyAvailable)
-                    {
-                        var key = Console.ReadKey(true).Key;
-                        HandleInput(key);
-                    }
-
-                    // Двигаем тетрамино вниз
-                    if (!MoveTetrominoDown())
-                    {
-                        // Если движение вниз невозможно, фиксируем тетрамино
-                        board.MergeTetromino(currentTetromino);
-                        board.ClearLines();
-                        if (!SpawnNewTetromino())
-                        {
-                            Console.WriteLine("Game over");
-                            break;
-                        }
-                    }
-
-                    // Пауза перед следующим шагом
-                    System.Threading.Thread.Sleep(200);
+                    HandleInput();
+                    Update();
+                    Render();
                 }
             }
 
-            // Обработка ввода пользователя
-            private void HandleInput(ConsoleKey key)
+            // Обработка пользовательского ввода в зависимости от состояния
+            private void HandleInput()
             {
+                switch (_state)
+                {
+                    case GameState.MainMenu:
+                        HandleInputMainMenu();
+                        break;
+                    case GameState.Playing:
+                        HandleInputPlaying();
+                        break;
+                    case GameState.Paused:
+                        HandleInputPaused();
+                        break;
+                    case GameState.GameOver:
+                        HandleInputGameOver();
+                        break;
+                }
+            }
+
+            // Обновление игрового процесса в зависимости от состояния
+            private void Update()
+            {
+                switch (_state)
+                {
+                    case GameState.MainMenu:
+                        UpdateMainMenu();
+                        break;
+                    case GameState.Playing:
+                        UpdatePlaying();
+                        break;
+                    case GameState.Paused:
+                        UpdatePaused();
+                        break;
+                    case GameState.GameOver:
+                        UpdateGameOver();
+                        break;
+                }
+            }
+
+            // Отрисовка текущего состояния игры
+            private void Render()
+            {
+                switch (_state)
+                {
+                    case GameState.MainMenu:
+                        RenderMainMenu();
+                        break;
+                    case GameState.Playing:
+                        RenderPlaying();
+                        break;
+                    case GameState.Paused:
+                        RenderPaused();
+                        break;
+                    case GameState.GameOver:
+                        RenderGameOver();
+                        break;
+                }
+            }
+
+            // Ввод в главном меню: старт новой игры или выход
+            private void HandleInputMainMenu()
+            {
+                if (!Console.KeyAvailable)
+                {
+                    return;
+                }
+
+                ConsoleKey key = Console.ReadKey(true).Key;
+                if (key == ConsoleKey.D1 || key == ConsoleKey.NumPad1)
+                {
+                    ResetGame();
+                    _state = GameState.Playing;
+                }
+                else if (key == ConsoleKey.D2 || key == ConsoleKey.NumPad2)
+                {
+                    Environment.Exit(0);
+                }
+            }
+
+            // Ввод во время игры: движение и вращение фигур
+            private void HandleInputPlaying()
+            {
+                if (!Console.KeyAvailable)
+                {
+                    return;
+                }
+
+                ConsoleKey key = Console.ReadKey(true).Key;
                 switch (key)
                 {
                     case ConsoleKey.LeftArrow:
@@ -278,6 +361,101 @@ namespace MaxFunkTetris2024
                 }
             }
 
+            // Ввод в паузе пока оставляем пустым для будущего расширения
+            private void HandleInputPaused()
+            {
+                // Зарезервировано для логики паузы
+            }
+
+            // Ввод после завершения игры: любой ввод возвращает в меню
+            private void HandleInputGameOver()
+            {
+                if (!Console.KeyAvailable)
+                {
+                    return;
+                }
+
+                Console.ReadKey(true);
+                _state = GameState.MainMenu;
+            }
+
+            // Обновление в главном меню пока не требуется
+            private void UpdateMainMenu()
+            {
+                // Логика обновления меню не нужна, оставляем заглушку
+            }
+
+            // Обновление игрового процесса: падение фигур и проверка завершения
+            private void UpdatePlaying()
+            {
+                if (!MoveTetrominoDown())
+                {
+                    board.MergeTetromino(currentTetromino);
+                    int clearedLines = board.ClearLines();
+                    if (clearedLines > 0)
+                    {
+                        _score += clearedLines * 100; // Простое начисление очков за каждую линию
+                    }
+
+                    if (!SpawnNewTetromino())
+                    {
+                        _state = GameState.GameOver;
+                    }
+                }
+
+                // Пауза для контроля скорости падения
+                System.Threading.Thread.Sleep(200);
+            }
+
+            // Обновление в паузе пока оставляем пустым для будущего расширения
+            private void UpdatePaused()
+            {
+                // Зарезервировано для логики паузы
+            }
+
+            // Обновление после завершения игры пока не требуется
+            private void UpdateGameOver()
+            {
+                // Логика обновления для экрана Game Over не требуется
+            }
+
+            // Отрисовка меню: заголовок и пункты выбора
+            private void RenderMainMenu()
+            {
+                Console.Clear();
+                Console.WriteLine("=== MaxFunkTetris2024 ===");
+                Console.WriteLine();
+                Console.WriteLine("1. Start game");
+                Console.WriteLine("2. Exit");
+                Console.WriteLine();
+                Console.WriteLine("Выберите пункт меню и нажмите соответствующую цифру.");
+            }
+
+            // Отрисовка игрового процесса с полем и очками
+            private void RenderPlaying()
+            {
+                GameRenderer.Render(board, currentTetromino);
+                Console.WriteLine();
+                Console.WriteLine($"Очки: {_score}");
+                Console.WriteLine("Управление: ← → для движения, ↑ для вращения, ↓ для ускорения.");
+            }
+
+            // Отрисовка паузы пока оставляем пустой
+            private void RenderPaused()
+            {
+                // Зарезервировано для будущей визуализации паузы
+            }
+
+            // Отрисовка экрана завершения игры
+            private void RenderGameOver()
+            {
+                Console.Clear();
+                Console.WriteLine("Game Over");
+                Console.WriteLine($"Итоговый счёт: {_score}");
+                Console.WriteLine();
+                Console.WriteLine("Нажмите любую клавишу, чтобы вернуться в главное меню.");
+            }
+
             // Метод для перемещения тетрамино
             private bool MoveTetromino(int dx, int dy)
             {
@@ -285,7 +463,7 @@ namespace MaxFunkTetris2024
                 currentTetromino.Y += dy;
                 if (board.IsCollision(currentTetromino))
                 {
-                    // Если произошло столкновение, возвращаем тетрамино на прежнее место
+                    // Если произошло столкновение, возвращаем тетромино на прежнее место
                     currentTetromino.X -= dx;
                     currentTetromino.Y -= dy;
                     return false;
@@ -307,7 +485,7 @@ namespace MaxFunkTetris2024
                     currentTetromino.Rotate(); // Поворачиваем обратно, если произошло столкновение
             }
 
-            // Метод для создания нового тетрамино
+            // Метод для создания нового тетромино
             private bool SpawnNewTetromino()
             {
                 currentTetromino = new Tetromino(random.Next(7));
