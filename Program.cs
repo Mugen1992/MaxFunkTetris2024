@@ -177,9 +177,11 @@ namespace MaxFunkTetris2024
             // Статический метод для отрисовки текущего состояния игры
             public static void Render(GameBoard board, Tetromino currentTetromino)
             {
-                Console.Clear();
+                // Рисуем построчно, чтобы избежать полной очистки консоли и мерцания
                 for (int y = 0; y < board.Height; y++)
                 {
+                    char[] row = new char[board.Width];
+
                     for (int x = 0; x < board.Width; x++)
                     {
                         bool isTetromino = false;
@@ -201,14 +203,27 @@ namespace MaxFunkTetris2024
                         }
 
                         // Отрисовываем блок или пустое место
-                        if (board.Grid[y, x] == 1 || isTetromino)
-                            Console.Write("█");
-                        else
-                            Console.Write(".");
+                        row[x] = (board.Grid[y, x] == 1 || isTetromino) ? '█' : '.';
                     }
-                    Console.WriteLine();
+
+                    Console.SetCursorPosition(UiLayout.BoardOffsetX, UiLayout.BoardOffsetY + y);
+                    Console.Write(new string(row));
                 }
+
+                // Переводим курсор под поле, чтобы последующие WriteLine не попадали внутрь поля
+                Console.SetCursorPosition(UiLayout.BoardOffsetX, UiLayout.BoardOffsetY + board.Height);
             }
+        }
+
+        public static class UiLayout
+        {
+            // Базовые смещения поля, чтобы оставить рамку слева и сверху
+            public const int BoardOffsetX = 2;
+            public const int BoardOffsetY = 1;
+
+            // Смещение панели статистики отрисовываем от правого края поля
+            public static int GetStatsOffsetX(int boardWidth) => BoardOffsetX + boardWidth + 4;
+            public static int StatsOffsetY => BoardOffsetY;
         }
 
         public class Game
@@ -251,6 +266,8 @@ namespace MaxFunkTetris2024
             public void Run()
             {
                 const int frameDelayMs = 30; // ~33 FPS фиксированная задержка кадра
+                // Прячем курсор один раз перед стартом игрового цикла, чтобы не мешал анимации
+                Console.CursorVisible = false;
                 while (true)
                 {
                     HandleInput();
@@ -437,9 +454,14 @@ namespace MaxFunkTetris2024
             private void RenderPlaying()
             {
                 GameRenderer.Render(board, currentTetromino);
-                Console.WriteLine();
-                Console.WriteLine($"Очки: {_score}");
-                Console.WriteLine("Управление: ← → для движения, ↑ для вращения, ↓ для ускорения.");
+                int statsX = UiLayout.GetStatsOffsetX(board.Width);
+
+                // Отрисовываем статистику рядом с полем с учётом смещений, затирая старые символы пробелами
+                Console.SetCursorPosition(statsX, UiLayout.StatsOffsetY);
+                Console.Write($"Очки: {_score}     ");
+
+                Console.SetCursorPosition(statsX, UiLayout.StatsOffsetY + 1);
+                Console.Write("Управление: ← → для движения, ↑ для вращения, ↓ для ускорения.   ");
             }
 
             // Отрисовка паузы пока оставляем пустой
