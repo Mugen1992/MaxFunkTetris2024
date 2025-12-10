@@ -183,6 +183,12 @@ namespace MaxFunkTetris2024
                         Grid[y + 1, x] = Grid[y, x];
                     }
                 }
+
+                // После сдвига очищаем верхнюю строку, чтобы не тянуть «мусор» сверху
+                for (int x = 0; x < Width; x++)
+                {
+                    Grid[0, x] = 0;
+                }
             }
         }
 
