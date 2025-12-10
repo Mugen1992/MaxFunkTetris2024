@@ -51,6 +51,20 @@ namespace MaxFunkTetris2024
                 Y = 0;
             }
 
+            // Сохраняем снимок текущей формы и координат, чтобы можно было вернуть состояние
+            public (int[,] shape, int x, int y) SaveState()
+            {
+                return ((int[,])Shape.Clone(), X, Y);
+            }
+
+            // Возвращаем ранее сохранённую форму и позицию
+            public void RestoreState(int[,] shape, int x, int y)
+            {
+                Shape = shape;
+                X = x;
+                Y = y;
+            }
+
             // Метод для вращения тетрамино
             public void Rotate()
             {
@@ -367,6 +381,9 @@ namespace MaxFunkTetris2024
             private readonly int _width;
             private readonly int _height;
             private GameState _state;
+            private bool _mainMenuDrawn; // Флаг, чтобы меню рисовалось один раз при входе
+            private bool _gameOverDrawn; // Флаг для одноразовой отрисовки экрана Game Over
+            private bool _pausedDrawn; // Задел под будущий экран паузы
 
             private int CurrentLevel => Math.Max(1, _linesCleared / 10 + 1);
 
@@ -377,6 +394,9 @@ namespace MaxFunkTetris2024
                 random = new Random();
                 _state = GameState.MainMenu; // Запуск с главного меню
                 ResetGame();
+                _mainMenuDrawn = false;
+                _gameOverDrawn = false;
+                _pausedDrawn = false;
             }
 
             // Метод для сброса игры и подготовки нового запуска
@@ -533,6 +553,7 @@ namespace MaxFunkTetris2024
 
                 Console.ReadKey(true);
                 _state = GameState.MainMenu;
+                _mainMenuDrawn = false; // При возвращении в меню разрешаем перерисовать экран один раз
             }
 
             // Обновление в главном меню пока не требуется
@@ -559,7 +580,10 @@ namespace MaxFunkTetris2024
                     }
 
                     if (!SpawnNewTetromino())
+                    {
                         _state = GameState.GameOver; // Переход в Game Over при невозможности спавна
+                        _gameOverDrawn = false; // Сбрасываем флаг, чтобы экран нарисовался при входе
+                    }
                 }
             }
 
@@ -578,15 +602,21 @@ namespace MaxFunkTetris2024
             // Отрисовка меню: заголовок и пункты выбора
             private void RenderMainMenu()
             {
-                Console.Clear(); // Полностью очищаем экран, чтобы меню не тонуло в старом выводе
+                // Меню рисуем один раз при входе в состояние, чтобы убрать фликер
+                if (_mainMenuDrawn)
+                    return;
+
+                Console.Clear();
                 Console.ResetColor();
-                Console.SetCursorPosition(0, 0); // Перемещаем курсор в начало для уменьшения мерцания
+                Console.SetCursorPosition(0, 0);
                 Console.WriteLine("=== MaxFunkTetris2024 ===");
                 Console.WriteLine();
                 Console.WriteLine("1. Start game");
                 Console.WriteLine("2. Exit");
                 Console.WriteLine();
                 Console.WriteLine("Выберите пункт меню и нажмите соответствующую цифру.");
+
+                _mainMenuDrawn = true;
             }
 
             // Отрисовка игрового процесса с полем и очками
@@ -599,19 +629,30 @@ namespace MaxFunkTetris2024
             // Отрисовка паузы пока оставляем пустой
             private void RenderPaused()
             {
+                // Статичный экран паузы рисуем один раз, когда появится логика паузы
+                if (_pausedDrawn)
+                    return;
+
                 // Зарезервировано для будущей визуализации паузы
+                _pausedDrawn = true;
             }
 
             // Отрисовка экрана завершения игры
             private void RenderGameOver()
             {
-                Console.Clear(); // Очищаем экран, чтобы текст Game Over не перекрывался старым полем
+                // Экран Game Over рисуем один раз при входе, чтобы исключить мерцание
+                if (_gameOverDrawn)
+                    return;
+
+                Console.Clear();
                 Console.ResetColor();
-                Console.SetCursorPosition(0, 0); // Позиционируем курсор в начало после очистки
+                Console.SetCursorPosition(0, 0);
                 Console.WriteLine("Game Over");
                 Console.WriteLine($"Итоговый счёт: {_score}");
                 Console.WriteLine();
                 Console.WriteLine("Нажмите любую клавишу, чтобы вернуться в главное меню.");
+
+                _gameOverDrawn = true;
             }
 
             // Метод для перемещения тетрамино
@@ -638,9 +679,15 @@ namespace MaxFunkTetris2024
             // Метод для вращения тетрамино
             private void RotateTetromino()
             {
+                // Сохраняем форму и координаты перед попыткой вращения
+                var savedState = currentTetromino.SaveState();
+
                 currentTetromino.Rotate();
                 if (board.IsCollision(currentTetromino))
-                    currentTetromino.Rotate(); // Поворачиваем обратно, если произошло столкновение
+                {
+                    // Возвращаем сохранённое состояние вместо повторного вращения
+                    currentTetromino.RestoreState(savedState.shape, savedState.x, savedState.y);
+                }
             }
 
             // Метод для создания нового тетромино
