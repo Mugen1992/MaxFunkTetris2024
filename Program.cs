@@ -217,6 +217,8 @@ namespace MaxFunkTetris2024
             private Tetromino currentTetromino;
             private Random random;
             private int _score;
+            private int _tick; // Счётчик кадров для управления падением
+            private int _dropInterval = 6; // Интервал падения фигуры в кадрах
             private readonly int _width;
             private readonly int _height;
             private GameState _state;
@@ -236,6 +238,7 @@ namespace MaxFunkTetris2024
                 board = new GameBoard(_width, _height);
                 currentTetromino = CreateNewTetromino();
                 _score = 0;
+                _tick = 0; // Обнуляем счётчик кадров при запуске новой игры
             }
 
             // Фабрика для создания случайного тетрамино
@@ -247,11 +250,13 @@ namespace MaxFunkTetris2024
             // Основной игровой цикл со стейт-машиной
             public void Run()
             {
+                const int frameDelayMs = 30; // ~33 FPS фиксированная задержка кадра
                 while (true)
                 {
                     HandleInput();
                     Update();
                     Render();
+                    System.Threading.Thread.Sleep(frameDelayMs);
                 }
             }
 
@@ -388,23 +393,20 @@ namespace MaxFunkTetris2024
             // Обновление игрового процесса: падение фигур и проверка завершения
             private void UpdatePlaying()
             {
+                _tick++; // Увеличиваем счётчик кадров
+                bool shouldFall = _tick % _dropInterval == 0; // Проверяем, пора ли падать
+                if (!shouldFall) return; // Если ещё рано, выходим
+
                 if (!MoveTetrominoDown())
                 {
                     board.MergeTetromino(currentTetromino);
                     int clearedLines = board.ClearLines();
                     if (clearedLines > 0)
-                    {
-                        _score += clearedLines * 100; // Простое начисление очков за каждую линию
-                    }
+                        _score += clearedLines * 100; // Начисляем очки за линии
 
                     if (!SpawnNewTetromino())
-                    {
-                        _state = GameState.GameOver;
-                    }
+                        _state = GameState.GameOver; // Переход в Game Over при невозможности спавна
                 }
-
-                // Пауза для контроля скорости падения
-                System.Threading.Thread.Sleep(200);
             }
 
             // Обновление в паузе пока оставляем пустым для будущего расширения
@@ -422,7 +424,7 @@ namespace MaxFunkTetris2024
             // Отрисовка меню: заголовок и пункты выбора
             private void RenderMainMenu()
             {
-                Console.Clear();
+                Console.SetCursorPosition(0, 0); // Перемещаем курсор в начало для уменьшения мерцания
                 Console.WriteLine("=== MaxFunkTetris2024 ===");
                 Console.WriteLine();
                 Console.WriteLine("1. Start game");
@@ -449,7 +451,7 @@ namespace MaxFunkTetris2024
             // Отрисовка экрана завершения игры
             private void RenderGameOver()
             {
-                Console.Clear();
+                Console.SetCursorPosition(0, 0); // Обновляем текст без полной очистки экрана
                 Console.WriteLine("Game Over");
                 Console.WriteLine($"Итоговый счёт: {_score}");
                 Console.WriteLine();
