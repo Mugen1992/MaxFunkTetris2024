@@ -511,6 +511,13 @@ namespace MaxFunkTetris2024
             // Обновление игрового процесса в зависимости от состояния
             private void Update()
             {
+                // В паузе пропускаем UpdatePlaying, ограничиваемся обработкой паузы
+                if (_state == GameState.Paused)
+                {
+                    UpdatePaused();
+                    return;
+                }
+
                 switch (_state)
                 {
                     case GameState.MainMenu:
@@ -524,9 +531,6 @@ namespace MaxFunkTetris2024
                         break;
                     case GameState.Playing:
                         UpdatePlaying();
-                        break;
-                    case GameState.Paused:
-                        UpdatePaused();
                         break;
                     case GameState.GameOver:
                         UpdateGameOver();
@@ -638,13 +642,38 @@ namespace MaxFunkTetris2024
                     case ConsoleKey.UpArrow:
                         RotateTetromino();
                         break;
+                    case ConsoleKey.P:
+                        // По P ставим игру на паузу и разрешаем отрисовать оверлей
+                        _state = GameState.Paused;
+                        _pausedDrawn = false;
+                        break;
                 }
             }
 
-            // Ввод в паузе пока оставляем пустым для будущего расширения
+            // Ввод в паузе: продолжить игру или выйти в меню
             private void HandleInputPaused()
             {
-                // Зарезервировано для логики паузы
+                if (!Console.KeyAvailable)
+                {
+                    return;
+                }
+
+                ConsoleKey key = Console.ReadKey(true).Key;
+                switch (key)
+                {
+                    case ConsoleKey.P:
+                        // Возвращаемся к игре без очистки поля
+                        _state = GameState.Playing;
+                        _pausedDrawn = false; // Чтобы следующий вход в паузу нарисовал оверлей заново
+                        break;
+                    case ConsoleKey.Escape:
+                        // Esc сбрасывает игру и возвращает в главное меню
+                        ResetGame();
+                        _state = GameState.MainMenu;
+                        _mainMenuDrawn = false;
+                        _pausedDrawn = false;
+                        break;
+                }
             }
 
             // Ввод на экране помощи: Esc/Enter возвращают в меню
@@ -897,14 +926,29 @@ namespace MaxFunkTetris2024
                 UiStatsRenderer.RenderStats(_score, CurrentLevel, _linesCleared);
             }
 
-            // Отрисовка паузы пока оставляем пустой
+            // Отрисовка паузы поверх игрового поля без очистки кадра
             private void RenderPaused()
             {
-                // Статичный экран паузы рисуем один раз, когда появится логика паузы
                 if (_pausedDrawn)
                     return;
 
-                // Зарезервировано для будущей визуализации паузы
+                // Рисуем компактный бокс по центру поля, чтобы не затирать фон
+                int overlayWidth = Math.Max(12, Math.Min(_width, 18));
+                int overlayHeight = 7;
+                int overlayX = UiLayout.BoardOffsetX + (_width - overlayWidth) / 2;
+                int overlayY = UiLayout.BoardOffsetY + (_height - overlayHeight) / 2;
+
+                UiFrameRenderer.DrawBox(overlayX, overlayY, overlayWidth, overlayHeight, " PAUSED ");
+
+                ConsoleColor previousColor = Console.ForegroundColor;
+                Console.ForegroundColor = UiTheme.InfoColor;
+
+                Console.SetCursorPosition(overlayX + 2, overlayY + 2);
+                Console.Write("Игра на паузе");
+                Console.SetCursorPosition(overlayX + 2, overlayY + 4);
+                Console.Write("P — продолжить, Esc — меню");
+
+                Console.ForegroundColor = previousColor;
                 _pausedDrawn = true;
             }
 
