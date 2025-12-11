@@ -636,6 +636,32 @@ namespace MaxFunkTetris2024
                 _mainMenuDrawn = false;
             }
 
+            // Ввод на экране помощи: любое нажатие возвращает в меню
+            private void HandleInputHelp()
+            {
+                if (!Console.KeyAvailable)
+                {
+                    return;
+                }
+
+                Console.ReadKey(true);
+                _state = GameState.MainMenu;
+                _mainMenuDrawn = false;
+            }
+
+            // Ввод на экране настроек: любое нажатие возвращает в меню
+            private void HandleInputSettings()
+            {
+                if (!Console.KeyAvailable)
+                {
+                    return;
+                }
+
+                Console.ReadKey(true);
+                _state = GameState.MainMenu;
+                _mainMenuDrawn = false;
+            }
+
             // Ввод после завершения игры: любой ввод возвращает в меню
             private void HandleInputGameOver()
             {
@@ -653,6 +679,18 @@ namespace MaxFunkTetris2024
             private void UpdateMainMenu()
             {
                 // Логика обновления меню не нужна, оставляем заглушку
+            }
+
+            // Экран помощи статичен, динамики не требуется
+            private void UpdateHelp()
+            {
+                // Заглушка для возможных будущих анимаций помощи
+            }
+
+            // Экран настроек статичен, динамики не требуется
+            private void UpdateSettings()
+            {
+                // Заглушка для будущих настроек
             }
 
             // Экран помощи статичен, динамики не требуется
@@ -714,7 +752,7 @@ namespace MaxFunkTetris2024
                 Console.Clear();
                 Console.ResetColor();
 
-                int boxWidth = 50;
+                int boxWidth = 46; // Чуть компактнее, но строки всё ещё помещаются
                 int boxHeight = 12;
                 int boxX = UiLayout.LeftPanelX;
                 int boxY = UiLayout.LeftPanelY;
@@ -753,8 +791,8 @@ namespace MaxFunkTetris2024
                 Console.Clear();
                 Console.ResetColor();
 
-                int boxWidth = 70;
-                int boxHeight = 13;
+                int boxWidth = 52; // Достаточно, чтобы строки не выходили за рамку, но без лишней ширины
+                int boxHeight = 11;
                 int boxX = UiLayout.LeftPanelX;
                 int boxY = UiLayout.LeftPanelY;
 
@@ -788,8 +826,8 @@ namespace MaxFunkTetris2024
                 Console.Clear();
                 Console.ResetColor();
 
-                int boxWidth = 70;
-                int boxHeight = 11;
+                int boxWidth = 52; // Сжимаем рамку до комфортного минимума
+                int boxHeight = 10;
                 int boxX = UiLayout.LeftPanelX;
                 int boxY = UiLayout.LeftPanelY;
 
