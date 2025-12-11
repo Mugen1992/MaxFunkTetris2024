@@ -516,7 +516,11 @@ namespace MaxFunkTetris2024
                     }
 
 #if DEBUG
-                    RenderFrameDiagnostics();
+                    // Рисуем диагностику только во время активной игры или паузы, чтобы не портить меню
+                    if (_state == GameState.Playing || _state == GameState.Paused)
+                    {
+                        RenderFrameDiagnostics();
+                    }
 #endif
                     System.Threading.Thread.Sleep(frameDelayMs);
                 }
