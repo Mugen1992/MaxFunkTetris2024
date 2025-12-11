@@ -43,5 +43,20 @@ namespace MaxFunkTetris2024.Tests
 
             return true;
         }
+
+        // Подсчёт количества занятых клеток в матрице
+        internal static int CountBlocks(int[,] matrix)
+        {
+            int blocks = 0;
+            for (int y = 0; y < matrix.GetLength(0); y++)
+            {
+                for (int x = 0; x < matrix.GetLength(1); x++)
+                {
+                    blocks += matrix[y, x];
+                }
+            }
+
+            return blocks;
+        }
     }
 }
