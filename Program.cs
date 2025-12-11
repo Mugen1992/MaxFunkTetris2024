@@ -934,13 +934,20 @@ namespace MaxFunkTetris2024
                 if (_pausedDrawn)
                     return;
 
-                // Рисуем компактный бокс по центру поля, чтобы не затирать фон
-                int overlayWidth = Math.Max(12, Math.Min(_width, 18));
-                int overlayHeight = 7;
+                // Рисуем компактный бокс по центру поля, который гарантированно помещается внутрь рамки
+                int overlayWidth = Math.Min(_width, Math.Max(14, Math.Min(_width, 18)));
+                int overlayHeight = 8;
                 int overlayX = UiLayout.BoardOffsetX + (_width - overlayWidth) / 2;
                 int overlayY = UiLayout.BoardOffsetY + (_height - overlayHeight) / 2;
 
                 UiFrameRenderer.DrawBox(overlayX, overlayY, overlayWidth, overlayHeight, " PAUSED ");
+
+                // Затираем фон внутри рамки, чтобы не просвечивали точки поля или текст панели
+                for (int y = overlayY + 1; y < overlayY + overlayHeight - 1; y++)
+                {
+                    Console.SetCursorPosition(overlayX + 1, y);
+                    Console.Write(new string(' ', overlayWidth - 2));
+                }
 
                 ConsoleColor previousColor = Console.ForegroundColor;
                 Console.ForegroundColor = UiTheme.InfoColor;
@@ -948,7 +955,9 @@ namespace MaxFunkTetris2024
                 Console.SetCursorPosition(overlayX + 2, overlayY + 2);
                 Console.Write("Игра на паузе");
                 Console.SetCursorPosition(overlayX + 2, overlayY + 4);
-                Console.Write("P — продолжить, Esc — меню");
+                Console.Write("P — продолж.");
+                Console.SetCursorPosition(overlayX + 2, overlayY + 5);
+                Console.Write("Esc — меню");
 
                 Console.ForegroundColor = previousColor;
                 _pausedDrawn = true;
