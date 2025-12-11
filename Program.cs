@@ -852,8 +852,8 @@ namespace MaxFunkTetris2024
                 Console.Clear();
                 Console.ResetColor();
 
-                int boxWidth = 70;
-                int boxHeight = 13;
+                int boxWidth = 50;
+                int boxHeight = 10;
                 int boxX = UiLayout.LeftPanelX;
                 int boxY = UiLayout.LeftPanelY;
 
@@ -864,16 +864,16 @@ namespace MaxFunkTetris2024
                 Console.SetCursorPosition(boxX + 3, boxY + 2);
                 Console.Write("Управление: ←/→ — движение, ↑ — вращение");
                 Console.SetCursorPosition(boxX + 3, boxY + 3);
-                Console.Write("            ↓ — ускорение падения, P — пауза");
+                Console.Write("↓ — ускорение падения, P — пауза");
                 Console.SetCursorPosition(boxX + 3, boxY + 4);
-                Console.Write("            Esc — вернуться в меню");
+                Console.Write("Esc — вернуться в меню");
 
                 Console.SetCursorPosition(boxX + 3, boxY + 6);
                 Console.Write("Цель: заполнять линии, чтобы они исчезали");
                 Console.SetCursorPosition(boxX + 3, boxY + 7);
                 Console.Write("и приносили очки.");
 
-                Console.SetCursorPosition(boxX + 3, boxY + boxHeight - 3);
+                Console.SetCursorPosition(boxX + 3, boxY + boxHeight - 2);
                 Console.Write("Enter или Esc — вернуться в меню.");
 
                 Console.ForegroundColor = previousColor;
@@ -889,8 +889,8 @@ namespace MaxFunkTetris2024
                 Console.Clear();
                 Console.ResetColor();
 
-                int boxWidth = 70;
-                int boxHeight = 11;
+                int boxWidth = 50;
+                int boxHeight = 10;
                 int boxX = UiLayout.LeftPanelX;
                 int boxY = UiLayout.LeftPanelY;
 
@@ -913,7 +913,9 @@ namespace MaxFunkTetris2024
 
                 Console.ForegroundColor = UiTheme.LabelColor;
                 Console.SetCursorPosition(boxX + 3, boxY + boxHeight - 3);
-                Console.Write("↑/↓ — выбор, Enter — сохранить, Esc — назад.");
+                Console.Write("↑/↓ — выбор, Enter — сохранить");
+                Console.SetCursorPosition(boxX + 3, boxY + boxHeight - 2);
+                Console.Write("Esc — назад.");
 
                 Console.ForegroundColor = previousColor;
                 _settingsDrawn = true;
