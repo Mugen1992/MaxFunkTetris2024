@@ -6,6 +6,8 @@ namespace MaxFunkTetris2024
     public enum GameState
     {
         MainMenu,
+        Help,
+        Settings,
         Playing,
         Paused,
         GameOver
@@ -390,6 +392,11 @@ namespace MaxFunkTetris2024
             private bool _mainMenuDrawn; // Флаг, чтобы меню рисовалось один раз при входе
             private bool _gameOverDrawn; // Флаг для одноразовой отрисовки экрана Game Over
             private bool _pausedDrawn; // Задел под будущий экран паузы
+            private bool _helpDrawn; // Флаг для одноразовой отрисовки экрана помощи
+            private bool _settingsDrawn; // Флаг для одноразовой отрисовки экрана настроек
+            private int _mainMenuSelectedIndex; // Текущий выделенный пункт главного меню
+
+            private readonly string[] _mainMenuItems = { "Start", "Help", "Settings", "Exit" }; // Подписи пунктов меню
 
             private int CurrentLevel => Math.Max(1, _linesCleared / 10 + 1);
 
@@ -403,6 +410,9 @@ namespace MaxFunkTetris2024
                 _mainMenuDrawn = false;
                 _gameOverDrawn = false;
                 _pausedDrawn = false;
+                _helpDrawn = false;
+                _settingsDrawn = false;
+                _mainMenuSelectedIndex = 0;
             }
 
             // Метод для сброса игры и подготовки нового запуска
@@ -444,6 +454,12 @@ namespace MaxFunkTetris2024
                     case GameState.MainMenu:
                         HandleInputMainMenu();
                         break;
+                    case GameState.Help:
+                        HandleInputHelp();
+                        break;
+                    case GameState.Settings:
+                        HandleInputSettings();
+                        break;
                     case GameState.Playing:
                         HandleInputPlaying();
                         break;
@@ -464,6 +480,12 @@ namespace MaxFunkTetris2024
                     case GameState.MainMenu:
                         UpdateMainMenu();
                         break;
+                    case GameState.Help:
+                        UpdateHelp();
+                        break;
+                    case GameState.Settings:
+                        UpdateSettings();
+                        break;
                     case GameState.Playing:
                         UpdatePlaying();
                         break;
@@ -483,6 +505,12 @@ namespace MaxFunkTetris2024
                 {
                     case GameState.MainMenu:
                         RenderMainMenu();
+                        break;
+                    case GameState.Help:
+                        RenderHelp();
+                        break;
+                    case GameState.Settings:
+                        RenderSettings();
                         break;
                     case GameState.Playing:
                         RenderPlaying();
@@ -505,15 +533,48 @@ namespace MaxFunkTetris2024
                 }
 
                 ConsoleKey key = Console.ReadKey(true).Key;
-                if (key == ConsoleKey.D1 || key == ConsoleKey.NumPad1)
+
+                // Навигация по пунктам меню с циклическим переходом
+                if (key == ConsoleKey.UpArrow)
                 {
-                    ResetGame();
-                    _state = GameState.Playing;
-                    UiFrameRenderer.DrawStaticFrame(board.Width, board.Height); // Рисуем статический каркас при входе в игру
+                    _mainMenuSelectedIndex = (_mainMenuSelectedIndex - 1 + _mainMenuItems.Length) % _mainMenuItems.Length;
+                    _mainMenuDrawn = false;
+                    return;
                 }
-                else if (key == ConsoleKey.D2 || key == ConsoleKey.NumPad2)
+
+                if (key == ConsoleKey.DownArrow)
                 {
-                    Environment.Exit(0);
+                    _mainMenuSelectedIndex = (_mainMenuSelectedIndex + 1) % _mainMenuItems.Length;
+                    _mainMenuDrawn = false;
+                    return;
+                }
+
+                if (key == ConsoleKey.Enter)
+                {
+                    switch (_mainMenuSelectedIndex)
+                    {
+                        case 0:
+                            ResetGame();
+                            _state = GameState.Playing;
+                            UiFrameRenderer.DrawStaticFrame(board.Width, board.Height); // Рисуем статический каркас при входе в игру
+                            break;
+                        case 1:
+                            _state = GameState.Help;
+                            _helpDrawn = false;
+                            break;
+                        case 2:
+                            _state = GameState.Settings;
+                            _settingsDrawn = false;
+                            break;
+                        case 3:
+                            Console.Clear();
+                            Console.ResetColor();
+                            Console.CursorVisible = true;
+                            Environment.Exit(0);
+                            break;
+                    }
+
+                    _mainMenuDrawn = false; // Сбрасываем флаг, чтобы меню перерисовалось при возвращении
                 }
             }
 
@@ -549,6 +610,32 @@ namespace MaxFunkTetris2024
                 // Зарезервировано для логики паузы
             }
 
+            // Ввод на экране помощи: любое нажатие возвращает в меню
+            private void HandleInputHelp()
+            {
+                if (!Console.KeyAvailable)
+                {
+                    return;
+                }
+
+                Console.ReadKey(true);
+                _state = GameState.MainMenu;
+                _mainMenuDrawn = false;
+            }
+
+            // Ввод на экране настроек: любое нажатие возвращает в меню
+            private void HandleInputSettings()
+            {
+                if (!Console.KeyAvailable)
+                {
+                    return;
+                }
+
+                Console.ReadKey(true);
+                _state = GameState.MainMenu;
+                _mainMenuDrawn = false;
+            }
+
             // Ввод после завершения игры: любой ввод возвращает в меню
             private void HandleInputGameOver()
             {
@@ -566,6 +653,18 @@ namespace MaxFunkTetris2024
             private void UpdateMainMenu()
             {
                 // Логика обновления меню не нужна, оставляем заглушку
+            }
+
+            // Экран помощи статичен, динамики не требуется
+            private void UpdateHelp()
+            {
+                // Заглушка для возможных будущих анимаций помощи
+            }
+
+            // Экран настроек статичен, динамики не требуется
+            private void UpdateSettings()
+            {
+                // Заглушка для будущих настроек
             }
 
             // Обновление игрового процесса: падение фигур и проверка завершения
@@ -608,21 +707,106 @@ namespace MaxFunkTetris2024
             // Отрисовка меню: заголовок и пункты выбора
             private void RenderMainMenu()
             {
-                // Меню рисуем один раз при входе в состояние, чтобы убрать фликер
+                // Меню рисуем только при изменении выделения или входе в состояние
                 if (_mainMenuDrawn)
                     return;
 
                 Console.Clear();
                 Console.ResetColor();
-                Console.SetCursorPosition(0, 0);
-                Console.WriteLine("=== MaxFunkTetris2024 ===");
-                Console.WriteLine();
-                Console.WriteLine("1. Start game");
-                Console.WriteLine("2. Exit");
-                Console.WriteLine();
-                Console.WriteLine("Выберите пункт меню и нажмите соответствующую цифру.");
 
+                int boxWidth = 46; // Чуть компактнее, но строки всё ещё помещаются
+                int boxHeight = 12;
+                int boxX = UiLayout.LeftPanelX;
+                int boxY = UiLayout.LeftPanelY;
+
+                UiFrameRenderer.DrawBox(boxX, boxY, boxWidth, boxHeight, " MAIN MENU ");
+
+                // Заголовок меню — просто шире рамка, остальное без изменений
+                ConsoleColor previousColor = Console.ForegroundColor;
+                Console.ForegroundColor = UiTheme.LabelColor;
+                Console.SetCursorPosition(boxX + 4, boxY + 2);
+                Console.Write("=== MaxFunkTetris2024 ===");
+
+                // Пункты меню с подсветкой выбранного
+                for (int i = 0; i < _mainMenuItems.Length; i++)
+                {
+                    Console.SetCursorPosition(boxX + 4, boxY + 4 + i);
+                    Console.ForegroundColor = i == _mainMenuSelectedIndex ? UiTheme.ValueColor : UiTheme.LabelColor;
+                    Console.Write($"> {_mainMenuItems[i]}");
+                }
+
+                // Подсказка по управлению укорочена, чтобы гарантированно помещалась
+                Console.ForegroundColor = UiTheme.InfoColor;
+                Console.SetCursorPosition(boxX + 4, boxY + boxHeight - 3);
+                Console.Write("↑/↓ выбор, Enter — подтвердить");
+
+                Console.ForegroundColor = previousColor;
                 _mainMenuDrawn = true;
+            }
+
+            // Отрисовка экрана помощи
+            private void RenderHelp()
+            {
+                if (_helpDrawn)
+                    return;
+
+                Console.Clear();
+                Console.ResetColor();
+
+                int boxWidth = 52; // Достаточно, чтобы строки не выходили за рамку, но без лишней ширины
+                int boxHeight = 11;
+                int boxX = UiLayout.LeftPanelX;
+                int boxY = UiLayout.LeftPanelY;
+
+                UiFrameRenderer.DrawBox(boxX, boxY, boxWidth, boxHeight, " HELP ");
+
+                ConsoleColor previousColor = Console.ForegroundColor;
+                Console.ForegroundColor = UiTheme.InfoColor;
+                Console.SetCursorPosition(boxX + 3, boxY + 2);
+                Console.Write("Управление: ←/→ — движение, ↑ — вращение,");
+                Console.SetCursorPosition(boxX + 3, boxY + 3);
+                Console.Write("            ↓ — ускорение падения.");
+
+                Console.SetCursorPosition(boxX + 3, boxY + 5);
+                Console.Write("Цель: заполнять линии, чтобы они исчезали");
+                Console.SetCursorPosition(boxX + 3, boxY + 6);
+                Console.Write("и приносили очки.");
+
+                Console.SetCursorPosition(boxX + 3, boxY + boxHeight - 3);
+                Console.Write("Нажмите любую клавишу, чтобы вернуться в меню.");
+
+                Console.ForegroundColor = previousColor;
+                _helpDrawn = true;
+            }
+
+            // Отрисовка экрана настроек
+            private void RenderSettings()
+            {
+                if (_settingsDrawn)
+                    return;
+
+                Console.Clear();
+                Console.ResetColor();
+
+                int boxWidth = 52; // Сжимаем рамку до комфортного минимума
+                int boxHeight = 10;
+                int boxX = UiLayout.LeftPanelX;
+                int boxY = UiLayout.LeftPanelY;
+
+                UiFrameRenderer.DrawBox(boxX, boxY, boxWidth, boxHeight, " SETTINGS ");
+
+                ConsoleColor previousColor = Console.ForegroundColor;
+                Console.ForegroundColor = UiTheme.InfoColor;
+                Console.SetCursorPosition(boxX + 3, boxY + 2);
+                Console.Write("Настройки появятся позже.");
+                Console.SetCursorPosition(boxX + 3, boxY + 3);
+                Console.Write("Пока можно вернуться назад.");
+
+                Console.SetCursorPosition(boxX + 3, boxY + boxHeight - 3);
+                Console.Write("Нажмите любую клавишу, чтобы вернуться в меню.");
+
+                Console.ForegroundColor = previousColor;
+                _settingsDrawn = true;
             }
 
             // Отрисовка игрового процесса с полем и очками
