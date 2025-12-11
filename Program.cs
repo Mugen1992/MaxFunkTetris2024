@@ -13,6 +13,14 @@ namespace MaxFunkTetris2024
         GameOver
     }
 
+    // Уровни сложности для настройки скорости игры
+    public enum Difficulty
+    {
+        Easy = 0,
+        Normal = 1,
+        Hard = 2
+    }
+
     internal class Program
     {
         static void Main(string[] args)
@@ -351,6 +359,12 @@ namespace MaxFunkTetris2024
                 Console.Write("↓ — ускорение падения");
                 Console.SetCursorPosition(infoPanelX + 2, UiLayout.InfoPanelY + 4);
                 Console.Write("↑ — вращение фигуры");
+                Console.SetCursorPosition(infoPanelX + 2, UiLayout.InfoPanelY + 5);
+                Console.Write("P — пауза");
+                Console.SetCursorPosition(infoPanelX + 2, UiLayout.InfoPanelY + 6);
+                Console.Write("Esc — выход в меню");
+                Console.SetCursorPosition(infoPanelX + 2, UiLayout.InfoPanelY + 7);
+                Console.Write("Enter — подтверждение");
 
                 Console.ForegroundColor = previousColor;
             }
@@ -395,6 +409,11 @@ namespace MaxFunkTetris2024
             private bool _helpDrawn; // Флаг для одноразовой отрисовки экрана помощи
             private bool _settingsDrawn; // Флаг для одноразовой отрисовки экрана настроек
             private int _mainMenuSelectedIndex; // Текущий выделенный пункт главного меню
+            private int _settingsSelectedIndex; // Текущий выделенный пункт в настройках сложности
+
+            private Difficulty _difficulty; // Текущая сложность игры
+
+            private readonly string[] _difficultyOptions = { "Easy", "Normal", "Hard" }; // Подписи пунктов сложности
 
             private readonly string[] _mainMenuItems = { "Start", "Help", "Settings", "Exit" }; // Подписи пунктов меню
 
@@ -406,6 +425,9 @@ namespace MaxFunkTetris2024
                 _height = height;
                 random = new Random();
                 _state = GameState.MainMenu; // Запуск с главного меню
+                _difficulty = Difficulty.Normal; // Базовая сложность
+                _settingsSelectedIndex = (int)_difficulty;
+                _dropInterval = GetDropInterval(_difficulty);
                 ResetGame();
                 _mainMenuDrawn = false;
                 _gameOverDrawn = false;
@@ -423,6 +445,20 @@ namespace MaxFunkTetris2024
                 _score = 0;
                 _tick = 0; // Обнуляем счётчик кадров при запуске новой игры
                 _linesCleared = 0;
+                _dropInterval = GetDropInterval(_difficulty); // Применяем скорость падения под выбранную сложность
+            }
+
+            // Определяем интервал падения для выбранной сложности
+            private int GetDropInterval(Difficulty difficulty)
+            {
+                // Чем сложнее режим, тем ниже интервал и выше скорость
+                return difficulty switch
+                {
+                    Difficulty.Easy => 10,
+                    Difficulty.Normal => 6,
+                    Difficulty.Hard => 3,
+                    _ => 6
+                };
             }
 
             // Фабрика для создания случайного тетрамино
@@ -565,6 +601,7 @@ namespace MaxFunkTetris2024
                         case 2:
                             _state = GameState.Settings;
                             _settingsDrawn = false;
+                            _settingsSelectedIndex = (int)_difficulty; // Подсветка текущей сложности при входе
                             break;
                         case 3:
                             Console.Clear();
@@ -610,7 +647,7 @@ namespace MaxFunkTetris2024
                 // Зарезервировано для логики паузы
             }
 
-            // Ввод на экране помощи: любое нажатие возвращает в меню
+            // Ввод на экране помощи: Esc/Enter возвращают в меню
             private void HandleInputHelp()
             {
                 if (!Console.KeyAvailable)
@@ -618,12 +655,16 @@ namespace MaxFunkTetris2024
                     return;
                 }
 
-                Console.ReadKey(true);
-                _state = GameState.MainMenu;
-                _mainMenuDrawn = false;
+                ConsoleKey key = Console.ReadKey(true).Key;
+                if (key == ConsoleKey.Enter || key == ConsoleKey.Escape || key == ConsoleKey.Spacebar)
+                {
+                    _state = GameState.MainMenu;
+                    _mainMenuDrawn = false;
+                    _helpDrawn = false;
+                }
             }
 
-            // Ввод на экране настроек: любое нажатие возвращает в меню
+            // Ввод на экране настроек: выбор сложности и выход в меню
             private void HandleInputSettings()
             {
                 if (!Console.KeyAvailable)
@@ -631,9 +672,38 @@ namespace MaxFunkTetris2024
                     return;
                 }
 
-                Console.ReadKey(true);
-                _state = GameState.MainMenu;
-                _mainMenuDrawn = false;
+                ConsoleKey key = Console.ReadKey(true).Key;
+
+                if (key == ConsoleKey.UpArrow)
+                {
+                    _settingsSelectedIndex = (_settingsSelectedIndex - 1 + _difficultyOptions.Length) % _difficultyOptions.Length;
+                    _settingsDrawn = false;
+                    return;
+                }
+
+                if (key == ConsoleKey.DownArrow)
+                {
+                    _settingsSelectedIndex = (_settingsSelectedIndex + 1) % _difficultyOptions.Length;
+                    _settingsDrawn = false;
+                    return;
+                }
+
+                if (key == ConsoleKey.Enter)
+                {
+                    _difficulty = (Difficulty)_settingsSelectedIndex;
+                    _dropInterval = GetDropInterval(_difficulty);
+                    _state = GameState.MainMenu;
+                    _mainMenuDrawn = false;
+                    _settingsDrawn = false;
+                    return;
+                }
+
+                if (key == ConsoleKey.Escape)
+                {
+                    _state = GameState.MainMenu;
+                    _mainMenuDrawn = false;
+                    _settingsDrawn = false;
+                }
             }
 
             // Ввод после завершения игры: любой ввод возвращает в меню
@@ -763,17 +833,19 @@ namespace MaxFunkTetris2024
                 ConsoleColor previousColor = Console.ForegroundColor;
                 Console.ForegroundColor = UiTheme.InfoColor;
                 Console.SetCursorPosition(boxX + 3, boxY + 2);
-                Console.Write("Управление: ←/→ — движение, ↑ — вращение,");
+                Console.Write("Управление: ←/→ — движение, ↑ — вращение");
                 Console.SetCursorPosition(boxX + 3, boxY + 3);
-                Console.Write("            ↓ — ускорение падения.");
+                Console.Write("            ↓ — ускорение падения, P — пауза");
+                Console.SetCursorPosition(boxX + 3, boxY + 4);
+                Console.Write("            Esc — вернуться в меню");
 
-                Console.SetCursorPosition(boxX + 3, boxY + 5);
-                Console.Write("Цель: заполнять линии, чтобы они исчезали");
                 Console.SetCursorPosition(boxX + 3, boxY + 6);
+                Console.Write("Цель: заполнять линии, чтобы они исчезали");
+                Console.SetCursorPosition(boxX + 3, boxY + 7);
                 Console.Write("и приносили очки.");
 
                 Console.SetCursorPosition(boxX + 3, boxY + boxHeight - 3);
-                Console.Write("Нажмите любую клавишу, чтобы вернуться в меню.");
+                Console.Write("Enter или Esc — вернуться в меню.");
 
                 Console.ForegroundColor = previousColor;
                 _helpDrawn = true;
@@ -798,12 +870,21 @@ namespace MaxFunkTetris2024
                 ConsoleColor previousColor = Console.ForegroundColor;
                 Console.ForegroundColor = UiTheme.InfoColor;
                 Console.SetCursorPosition(boxX + 3, boxY + 2);
-                Console.Write("Настройки появятся позже.");
-                Console.SetCursorPosition(boxX + 3, boxY + 3);
-                Console.Write("Пока можно вернуться назад.");
+                Console.Write("Выберите сложность:");
 
+                for (int i = 0; i < _difficultyOptions.Length; i++)
+                {
+                    bool isSelected = i == _settingsSelectedIndex;
+                    bool isCurrent = (Difficulty)i == _difficulty;
+                    Console.SetCursorPosition(boxX + 5, boxY + 4 + i);
+                    Console.ForegroundColor = isSelected ? UiTheme.ValueColor : UiTheme.InfoColor;
+                    string marker = isCurrent ? "*" : " ";
+                    Console.Write($"> [{marker}] {_difficultyOptions[i]}");
+                }
+
+                Console.ForegroundColor = UiTheme.LabelColor;
                 Console.SetCursorPosition(boxX + 3, boxY + boxHeight - 3);
-                Console.Write("Нажмите любую клавишу, чтобы вернуться в меню.");
+                Console.Write("↑/↓ — выбор, Enter — сохранить, Esc — назад.");
 
                 Console.ForegroundColor = previousColor;
                 _settingsDrawn = true;
