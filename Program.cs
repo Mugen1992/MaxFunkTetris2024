@@ -393,8 +393,9 @@ namespace MaxFunkTetris2024
 
         public class Game
         {
-            private GameBoard board;
-            private Tetromino currentTetromino;
+            // Инициализируем через null!-заглушку, т.к. реальные значения задаются в ResetGame/SpawnNewTetromino
+            private GameBoard board = null!;
+            private Tetromino currentTetromino = null!;
             private Random random;
             private int _score;
             private int _tick; // Счётчик кадров для управления падением
