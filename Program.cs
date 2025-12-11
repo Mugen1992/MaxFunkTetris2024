@@ -1,4 +1,6 @@
-﻿using System;
+using System;
+using System.Diagnostics;
+using System.Text;
 
 namespace MaxFunkTetris2024
 {
@@ -23,8 +25,25 @@ namespace MaxFunkTetris2024
 
     internal class Program
     {
+        // Минимальный рекомендуемый размер консольного окна для корректного UI
+        private const int MinConsoleWidth = 80;
+        private const int MinConsoleHeight = 30;
+
         static void Main(string[] args)
         {
+            // На старте включаем UTF-8, чтобы рамки и символы отображались корректно
+            Console.OutputEncoding = Encoding.UTF8;
+
+            // Один раз предупреждаем, если окно слишком маленькое для интерфейса
+            if (Console.WindowWidth < MinConsoleWidth || Console.WindowHeight < MinConsoleHeight)
+            {
+                Console.Clear();
+                Console.WriteLine($"[WARN] Current console size is {Console.WindowWidth}x{Console.WindowHeight}.");
+                Console.WriteLine($"Recommended minimum size is {MinConsoleWidth}x{MinConsoleHeight}.");
+                Console.WriteLine("Please resize the window and press any key to continue...");
+                Console.ReadKey(true);
+            }
+
             Game game = new Game(15, 20);
             game.Run();
         }
@@ -418,6 +437,11 @@ namespace MaxFunkTetris2024
 
             private readonly string[] _mainMenuItems = { "Start", "Help", "Settings", "Exit" }; // Подписи пунктов меню
 
+            // Простейшая метрика кадра для диагностики производительности
+            private readonly Stopwatch _frameStopwatch = new();
+            private double _lastFrameMilliseconds;
+            private double _maxFrameMilliseconds;
+
             private int CurrentLevel => Math.Max(1, _linesCleared / 10 + 1);
 
             public Game(int width, int height)
@@ -476,9 +500,24 @@ namespace MaxFunkTetris2024
                 Console.CursorVisible = false;
                 while (true)
                 {
+                    // Стартуем замер длительности кадра
+                    _frameStopwatch.Restart();
+
                     HandleInput();
                     Update();
                     Render();
+
+                    // Фиксируем длительность кадра и обновляем простую статистику
+                    _frameStopwatch.Stop();
+                    _lastFrameMilliseconds = _frameStopwatch.Elapsed.TotalMilliseconds;
+                    if (_lastFrameMilliseconds > _maxFrameMilliseconds)
+                    {
+                        _maxFrameMilliseconds = _lastFrameMilliseconds;
+                    }
+
+#if DEBUG
+                    RenderFrameDiagnostics();
+#endif
                     System.Threading.Thread.Sleep(frameDelayMs);
                 }
             }
@@ -928,6 +967,22 @@ namespace MaxFunkTetris2024
                 GameRenderer.Render(board, currentTetromino);
                 UiStatsRenderer.RenderStats(_score, CurrentLevel, _linesCleared);
             }
+
+#if DEBUG
+            // Рисуем небольшую строку профилировки кадра под правой панелью, чтобы не мешать игровому полю
+            private void RenderFrameDiagnostics()
+            {
+                ConsoleColor previousColor = Console.ForegroundColor;
+                Console.ForegroundColor = UiTheme.InfoColor;
+
+                int infoX = UiLayout.GetInfoPanelX(board.Width);
+                int infoY = UiLayout.InfoPanelY + UiLayout.RightPanelHeight + 1;
+                Console.SetCursorPosition(infoX, infoY);
+                Console.Write($"Frame: {_lastFrameMilliseconds,6:0.0} ms max {_maxFrameMilliseconds,6:0.0} ms   ");
+
+                Console.ForegroundColor = previousColor;
+            }
+#endif
 
             // Отрисовка паузы поверх игрового поля без очистки кадра
             private void RenderPaused()
