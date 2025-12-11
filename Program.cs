@@ -567,6 +567,9 @@ namespace MaxFunkTetris2024
                             _settingsDrawn = false;
                             break;
                         case 3:
+                            Console.Clear();
+                            Console.ResetColor();
+                            Console.CursorVisible = true;
                             Environment.Exit(0);
                             break;
                     }
@@ -711,14 +714,14 @@ namespace MaxFunkTetris2024
                 Console.Clear();
                 Console.ResetColor();
 
-                int boxWidth = 36;
+                int boxWidth = 50;
                 int boxHeight = 12;
                 int boxX = UiLayout.LeftPanelX;
                 int boxY = UiLayout.LeftPanelY;
 
                 UiFrameRenderer.DrawBox(boxX, boxY, boxWidth, boxHeight, " MAIN MENU ");
 
-                // Заголовок меню
+                // Заголовок меню — просто шире рамка, остальное без изменений
                 ConsoleColor previousColor = Console.ForegroundColor;
                 Console.ForegroundColor = UiTheme.LabelColor;
                 Console.SetCursorPosition(boxX + 4, boxY + 2);
@@ -732,10 +735,10 @@ namespace MaxFunkTetris2024
                     Console.Write($"> {_mainMenuItems[i]}");
                 }
 
-                // Подсказка по управлению
+                // Подсказка по управлению укорочена, чтобы гарантированно помещалась
                 Console.ForegroundColor = UiTheme.InfoColor;
                 Console.SetCursorPosition(boxX + 4, boxY + boxHeight - 3);
-                Console.Write("↑/↓ — выбор, Enter — подтвердить");
+                Console.Write("↑/↓ выбор, Enter — подтвердить");
 
                 Console.ForegroundColor = previousColor;
                 _mainMenuDrawn = true;
@@ -750,8 +753,8 @@ namespace MaxFunkTetris2024
                 Console.Clear();
                 Console.ResetColor();
 
-                int boxWidth = 50;
-                int boxHeight = 12;
+                int boxWidth = 70;
+                int boxHeight = 13;
                 int boxX = UiLayout.LeftPanelX;
                 int boxY = UiLayout.LeftPanelY;
 
@@ -760,9 +763,15 @@ namespace MaxFunkTetris2024
                 ConsoleColor previousColor = Console.ForegroundColor;
                 Console.ForegroundColor = UiTheme.InfoColor;
                 Console.SetCursorPosition(boxX + 3, boxY + 2);
-                Console.Write("Управление: ←/→ — движение, ↑ — вращение, ↓ — ускорение.");
+                Console.Write("Управление: ←/→ — движение, ↑ — вращение,");
                 Console.SetCursorPosition(boxX + 3, boxY + 3);
-                Console.Write("Цель: заполнять линии, чтобы они исчезали и приносили очки.");
+                Console.Write("            ↓ — ускорение падения.");
+
+                Console.SetCursorPosition(boxX + 3, boxY + 5);
+                Console.Write("Цель: заполнять линии, чтобы они исчезали");
+                Console.SetCursorPosition(boxX + 3, boxY + 6);
+                Console.Write("и приносили очки.");
+
                 Console.SetCursorPosition(boxX + 3, boxY + boxHeight - 3);
                 Console.Write("Нажмите любую клавишу, чтобы вернуться в меню.");
 
@@ -779,8 +788,8 @@ namespace MaxFunkTetris2024
                 Console.Clear();
                 Console.ResetColor();
 
-                int boxWidth = 50;
-                int boxHeight = 10;
+                int boxWidth = 70;
+                int boxHeight = 11;
                 int boxX = UiLayout.LeftPanelX;
                 int boxY = UiLayout.LeftPanelY;
 
@@ -789,7 +798,10 @@ namespace MaxFunkTetris2024
                 ConsoleColor previousColor = Console.ForegroundColor;
                 Console.ForegroundColor = UiTheme.InfoColor;
                 Console.SetCursorPosition(boxX + 3, boxY + 2);
-                Console.Write("Настройки появятся позже. Пока можно вернуться назад.");
+                Console.Write("Настройки появятся позже.");
+                Console.SetCursorPosition(boxX + 3, boxY + 3);
+                Console.Write("Пока можно вернуться назад.");
+
                 Console.SetCursorPosition(boxX + 3, boxY + boxHeight - 3);
                 Console.Write("Нажмите любую клавишу, чтобы вернуться в меню.");
 
