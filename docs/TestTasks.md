@@ -1,20 +1,15 @@
 # Задачи по сборке и запуску тестов из TestPlan
 
-Ниже - чек-лист, который помогает пошагово собрать и запускать тесты из `TestPlan.md` **только через терминал**. Список разбит по уровням тестирования и опирается на стандартные команды .NET CLI.
+Ниже - чек-лист, который помогает пошагово запускать тесты из `TestPlan.md` **только через терминал**. Список разбит по уровням тестирования и опирается на стандартные команды .NET CLI. В репозитории уже создан проект `MaxFunkTetris2024.Tests` с xUnit и добавлен в решение.
 
 ## 1. Базовая инфраструктура тестов
 
-1. Создать проект с тестами (xUnit, чтобы не добавлять новых зависимостей):
-   - `dotnet new xunit -n MaxFunkTetris2024.Tests`
-   - `dotnet sln add MaxFunkTetris2024.Tests/MaxFunkTetris2024.Tests.csproj`
-   - `dotnet add MaxFunkTetris2024.Tests/MaxFunkTetris2024.Tests.csproj reference MaxFunkTetris2024.csproj`
-2. Оформить общие фикстуры/билдеры для фигур и доски (минимум: фабрика Tetromino с формами O/I/T/J/L/S/Z; хелпер для заполнения строк поля).
-3. Договориться о нейминге тестов: `ClassName_MethodName_State_Expected`.
-4. Базовые команды запуска:
+1. Базовые команды запуска уже работающего набора:
    - `dotnet test` - все тесты.
    - `dotnet test --filter Category=Unit` - только юнит-тесты ядра.
    - `dotnet test --filter Category=Integration` - интеграционные.
    - `dotnet test --filter Category=Rendering` - рендеринг (если понадобится изолировать).
+2. Фикстуры/билдеры для фигур и доски: вынесены в `TestHelpers` (создание фигур, заполнение строк). При добавлении новых форм держим единый нейминг тестов: `ClassName_MethodName_State_Expected`.
 
 ## 2. Юнит-тесты ядра (см. раздел 2 TestPlan)
 
