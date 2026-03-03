@@ -12,8 +12,8 @@ namespace MaxFunkTetris2024.Tests
         [Trait("Category", "Unit")]
         public void GetDropInterval_ReturnsExpectedValues_ForEachDifficulty()
         {
-            var game = new Program.Game(10, 20);
-            MethodInfo? method = typeof(Program.Game).GetMethod("GetDropInterval", BindingFlags.NonPublic | BindingFlags.Instance);
+            var game = new Game(10, 20);
+            MethodInfo? method = typeof(Game).GetMethod("GetDropInterval", BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.NotNull(method);
 
             Assert.Equal(10, method!.Invoke(game, new object[] { Difficulty.Easy }));
@@ -25,8 +25,8 @@ namespace MaxFunkTetris2024.Tests
         [Trait("Category", "Unit")]
         public void ResetGame_SetsScoreLinesAndTickToZero()
         {
-            var game = new Program.Game(10, 20);
-            MethodInfo? resetMethod = typeof(Program.Game).GetMethod("ResetGame", BindingFlags.NonPublic | BindingFlags.Instance);
+            var game = new Game(10, 20);
+            MethodInfo? resetMethod = typeof(Game).GetMethod("ResetGame", BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.NotNull(resetMethod);
 
             SetPrivateField(game, "_score", 500);
@@ -44,25 +44,25 @@ namespace MaxFunkTetris2024.Tests
         [Trait("Category", "Unit")]
         public void UpdatePlaying_WhenLineCleared_IncreasesScoreAndLines()
         {
-            var game = new Program.Game(10, 4);
-            var boardField = typeof(Program.Game).GetField("board", BindingFlags.NonPublic | BindingFlags.Instance);
-            var tetrominoField = typeof(Program.Game).GetField("currentTetromino", BindingFlags.NonPublic | BindingFlags.Instance);
-            var tickField = typeof(Program.Game).GetField("_tick", BindingFlags.NonPublic | BindingFlags.Instance);
-            var dropIntervalField = typeof(Program.Game).GetField("_dropInterval", BindingFlags.NonPublic | BindingFlags.Instance);
+            var game = new Game(10, 4);
+            var boardField = typeof(Game).GetField("board", BindingFlags.NonPublic | BindingFlags.Instance);
+            var tetrominoField = typeof(Game).GetField("currentTetromino", BindingFlags.NonPublic | BindingFlags.Instance);
+            var tickField = typeof(Game).GetField("_tick", BindingFlags.NonPublic | BindingFlags.Instance);
+            var dropIntervalField = typeof(Game).GetField("_dropInterval", BindingFlags.NonPublic | BindingFlags.Instance);
 
             Assert.NotNull(boardField);
             Assert.NotNull(tetrominoField);
             Assert.NotNull(tickField);
             Assert.NotNull(dropIntervalField);
 
-            var board = new Program.GameBoard(10, 4);
+            var board = new GameBoard(10, 4);
             // Заполняем нижнюю строку почти полностью, оставляя два правых столбца пустыми
             for (int x = 0; x < board.Width - 2; x++)
             {
                 board.Grid[board.Height - 1, x] = 1;
             }
 
-            var tetromino = new Program.Tetromino(0);
+            var tetromino = new Tetromino(0);
             tetromino.X = board.Width - tetromino.Shape.GetLength(1);
             tetromino.Y = board.Height - tetromino.Shape.GetLength(0);
 
@@ -71,7 +71,7 @@ namespace MaxFunkTetris2024.Tests
             dropIntervalField!.SetValue(game, 1); // заставляем падать каждый тик
             tickField!.SetValue(game, 0);
 
-            MethodInfo? updatePlaying = typeof(Program.Game).GetMethod("UpdatePlaying", BindingFlags.NonPublic | BindingFlags.Instance);
+            MethodInfo? updatePlaying = typeof(Game).GetMethod("UpdatePlaying", BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.NotNull(updatePlaying);
 
             updatePlaying!.Invoke(game, Array.Empty<object>());
@@ -84,18 +84,18 @@ namespace MaxFunkTetris2024.Tests
         [Trait("Category", "Unit")]
         public void UsePowerUp_Bomb_OnSmallBoard_DoesNotThrow()
         {
-            var game = new Program.Game(10, 2); // Очень маленькое поле
-            var boardField = typeof(Program.Game).GetField("board", BindingFlags.NonPublic | BindingFlags.Instance);
-            var powerUpField = typeof(Program.Game).GetField("_currentPowerUp", BindingFlags.NonPublic | BindingFlags.Instance);
+            var game = new Game(10, 2); // Очень маленькое поле
+            var boardField = typeof(Game).GetField("board", BindingFlags.NonPublic | BindingFlags.Instance);
+            var powerUpField = typeof(Game).GetField("_currentPowerUp", BindingFlags.NonPublic | BindingFlags.Instance);
 
             Assert.NotNull(boardField);
             Assert.NotNull(powerUpField);
 
-            var board = new Program.GameBoard(10, 2);
+            var board = new GameBoard(10, 2);
             boardField!.SetValue(game, board);
             powerUpField!.SetValue(game, PowerUpType.Bomb);
 
-            MethodInfo? usePowerUp = typeof(Program.Game).GetMethod("UsePowerUp", BindingFlags.NonPublic | BindingFlags.Instance);
+            MethodInfo? usePowerUp = typeof(Game).GetMethod("UsePowerUp", BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.NotNull(usePowerUp);
 
             // Не должно вызывать исключений
@@ -112,13 +112,13 @@ namespace MaxFunkTetris2024.Tests
         [Trait("Category", "Unit")]
         public void UsePowerUp_Freeze_AppliesSlowdown()
         {
-            var game = new Program.Game(10, 20);
-            var powerUpField = typeof(Program.Game).GetField("_currentPowerUp", BindingFlags.NonPublic | BindingFlags.Instance);
+            var game = new Game(10, 20);
+            var powerUpField = typeof(Game).GetField("_currentPowerUp", BindingFlags.NonPublic | BindingFlags.Instance);
 
             Assert.NotNull(powerUpField);
             powerUpField!.SetValue(game, PowerUpType.Freeze);
 
-            MethodInfo? usePowerUp = typeof(Program.Game).GetMethod("UsePowerUp", BindingFlags.NonPublic | BindingFlags.Instance);
+            MethodInfo? usePowerUp = typeof(Game).GetMethod("UsePowerUp", BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.NotNull(usePowerUp);
 
             usePowerUp!.Invoke(game, Array.Empty<object>());
@@ -131,14 +131,14 @@ namespace MaxFunkTetris2024.Tests
         [Trait("Category", "Unit")]
         public void UpdatePlaying_WhenFourLinesCleared_GrantsPowerUp()
         {
-            var game = new Program.Game(10, 4);
-            var boardField = typeof(Program.Game).GetField("board", BindingFlags.NonPublic | BindingFlags.Instance);
-            var tetrominoField = typeof(Program.Game).GetField("currentTetromino", BindingFlags.NonPublic | BindingFlags.Instance);
-            var tickField = typeof(Program.Game).GetField("_tick", BindingFlags.NonPublic | BindingFlags.Instance);
-            var dropIntervalField = typeof(Program.Game).GetField("_dropInterval", BindingFlags.NonPublic | BindingFlags.Instance);
-            var powerUpField = typeof(Program.Game).GetField("_currentPowerUp", BindingFlags.NonPublic | BindingFlags.Instance);
+            var game = new Game(10, 4);
+            var boardField = typeof(Game).GetField("board", BindingFlags.NonPublic | BindingFlags.Instance);
+            var tetrominoField = typeof(Game).GetField("currentTetromino", BindingFlags.NonPublic | BindingFlags.Instance);
+            var tickField = typeof(Game).GetField("_tick", BindingFlags.NonPublic | BindingFlags.Instance);
+            var dropIntervalField = typeof(Game).GetField("_dropInterval", BindingFlags.NonPublic | BindingFlags.Instance);
+            var powerUpField = typeof(Game).GetField("_currentPowerUp", BindingFlags.NonPublic | BindingFlags.Instance);
 
-            var board = new Program.GameBoard(10, 4);
+            var board = new GameBoard(10, 4);
             // Очищаем 4 линии за один раз - для этого нам нужна ситуация, когда фигура 1х4 замыкает 4 линии
             // Заполним все 4 строки, оставив один столбец пустым
             for (int y = 0; y < 4; y++)
@@ -149,7 +149,7 @@ namespace MaxFunkTetris2024.Tests
                 }
             }
 
-            var tetromino = new Program.Tetromino(1); // I-форма 1x4
+            var tetromino = new Tetromino(1); // I-форма 1x4
             tetromino.Rotate(); // Теперь это 4x1 (вертикальная линия)
             tetromino.X = board.Width - 1; // В последнем столбце
             tetromino.Y = 0; // Начинает сверху
@@ -159,7 +159,7 @@ namespace MaxFunkTetris2024.Tests
             dropIntervalField!.SetValue(game, 1);
             tickField!.SetValue(game, 0);
 
-            MethodInfo? updatePlaying = typeof(Program.Game).GetMethod("UpdatePlaying", BindingFlags.NonPublic | BindingFlags.Instance);
+            MethodInfo? updatePlaying = typeof(Game).GetMethod("UpdatePlaying", BindingFlags.NonPublic | BindingFlags.Instance);
 
             updatePlaying!.Invoke(game, Array.Empty<object>());
 
@@ -173,12 +173,12 @@ namespace MaxFunkTetris2024.Tests
         [Trait("Category", "Unit")]
         public void RotateTetromino_RestoresState_IfCollisionOccurs()
         {
-            var game = new Program.Game(10, 20);
-            var boardField = typeof(Program.Game).GetField("board", BindingFlags.NonPublic | BindingFlags.Instance);
-            var tetrominoField = typeof(Program.Game).GetField("currentTetromino", BindingFlags.NonPublic | BindingFlags.Instance);
+            var game = new Game(10, 20);
+            var boardField = typeof(Game).GetField("board", BindingFlags.NonPublic | BindingFlags.Instance);
+            var tetrominoField = typeof(Game).GetField("currentTetromino", BindingFlags.NonPublic | BindingFlags.Instance);
 
-            var board = new Program.GameBoard(10, 20);
-            var tetromino = new Program.Tetromino(1); // I-форма 1x4
+            var board = new GameBoard(10, 20);
+            var tetromino = new Tetromino(1); // I-форма 1x4
             tetromino.X = 9; // Самый правый столбец
             tetromino.Y = 10;
             // Изначально ширина 4, но если x=9, он уже выходит за пределы, но при спавне это может быть.
@@ -188,24 +188,24 @@ namespace MaxFunkTetris2024.Tests
             boardField!.SetValue(game, board);
             tetrominoField!.SetValue(game, tetromino);
 
-            MethodInfo? rotateMethod = typeof(Program.Game).GetMethod("RotateTetromino", BindingFlags.NonPublic | BindingFlags.Instance);
+            MethodInfo? rotateMethod = typeof(Game).GetMethod("RotateTetromino", BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.NotNull(rotateMethod);
 
             // Вращение сделает его шириной 4 (x=9 до 12) - это коллизия (x >= 10)
             rotateMethod!.Invoke(game, Array.Empty<object>());
 
             // Состояние должно быть восстановлено
-            Assert.Equal(1, GetPrivateField<Program.Tetromino>(game, "currentTetromino").Shape.GetLength(1));
+            Assert.Equal(1, GetPrivateField<Tetromino>(game, "currentTetromino").Shape.GetLength(1));
         }
 
         [Fact]
         [Trait("Category", "Unit")]
         public void CurrentLevel_Increases_Every10Lines()
         {
-            var game = new Program.Game(10, 20);
+            var game = new Game(10, 20);
             SetPrivateField(game, "_linesCleared", 0);
 
-            var currentLevelProp = typeof(Program.Game).GetProperty("CurrentLevel", BindingFlags.NonPublic | BindingFlags.Instance);
+            var currentLevelProp = typeof(Game).GetProperty("CurrentLevel", BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.NotNull(currentLevelProp);
 
             Assert.Equal(1, currentLevelProp!.GetValue(game));
@@ -220,16 +220,16 @@ namespace MaxFunkTetris2024.Tests
             Assert.Equal(3, currentLevelProp!.GetValue(game));
         }
 
-        private static void SetPrivateField<T>(Program.Game game, string name, T value)
+        private static void SetPrivateField<T>(Game game, string name, T value)
         {
-            FieldInfo? field = typeof(Program.Game).GetField(name, BindingFlags.NonPublic | BindingFlags.Instance);
+            FieldInfo? field = typeof(Game).GetField(name, BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.NotNull(field);
             field!.SetValue(game, value);
         }
 
-        private static T GetPrivateField<T>(Program.Game game, string name)
+        private static T GetPrivateField<T>(Game game, string name)
         {
-            FieldInfo? field = typeof(Program.Game).GetField(name, BindingFlags.NonPublic | BindingFlags.Instance);
+            FieldInfo? field = typeof(Game).GetField(name, BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.NotNull(field);
             return (T)field!.GetValue(game)!;
         }
