@@ -32,6 +32,19 @@ namespace MaxFunkTetris2024.Tests
 
         [Fact]
         [Trait("Category", "Unit")]
+        public void IsCollision_ReturnsFalse_WhenPieceIsPartiallyAboveBoard()
+        {
+            var board = TestHelpers.CreateDefaultBoard();
+            var tetromino = TestHelpers.CreateTetromino(1); // I-форма (1x4)
+            tetromino.X = 3;
+            tetromino.Y = -1; // Находится частично над полем, это нормальное явление для спавна
+
+            // Не должно быть коллизий с границами поля, пока не пересекает левую/правую/нижнюю границу или занятую клетку
+            Assert.False(board.IsCollision(tetromino));
+        }
+
+        [Fact]
+        [Trait("Category", "Unit")]
         public void IsCollision_ReturnsTrue_WhenPieceHitsRightBorder()
         {
             var board = TestHelpers.CreateDefaultBoard();
@@ -152,6 +165,34 @@ namespace MaxFunkTetris2024.Tests
             {
                 Assert.Equal(0, board.Grid[bottom - 1, x]);
             }
+        }
+
+        [Fact]
+        [Trait("Category", "Unit")]
+        public void ClearLines_RemovesTopmostLine_Correctly()
+        {
+            var board = TestHelpers.CreateDefaultBoard();
+
+            // Заполняем самую верхнюю строку (y = 0)
+            for (int x = 0; x < board.Width; x++)
+            {
+                board.Grid[0, x] = 1;
+            }
+
+            // Заполняем клетку под ней, чтобы проверить, что она не сдвинулась (ее некуда сдвигать вниз, так как очистилась строка над ней)
+            board.Grid[1, 0] = 1;
+
+            int cleared = board.ClearLines();
+
+            Assert.Equal(1, cleared);
+            // Верхняя строка очистилась
+            for (int x = 0; x < board.Width; x++)
+            {
+                Assert.Equal(0, board.Grid[0, x]);
+            }
+
+            // Строка ниже осталась на месте
+            Assert.Equal(1, board.Grid[1, 0]);
         }
     }
 }

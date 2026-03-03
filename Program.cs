@@ -829,8 +829,9 @@ namespace MaxFunkTetris2024
 
                 if (_currentPowerUp == PowerUpType.Bomb)
                 {
-                    // Удаляем три нижние строки
-                    for (int i = 0; i < 3; i++)
+                    // Удаляем три нижние строки (или меньше, если поле маленькое)
+                    int linesToRemove = Math.Min(3, board.Height);
+                    for (int i = 0; i < linesToRemove; i++)
                     {
                         for (int x = 0; x < board.Width; x++)
                         {
@@ -838,14 +839,14 @@ namespace MaxFunkTetris2024
                         }
                     }
                     // После очистки нижних трех строк сдвигаем всё вниз
-                    for (int y = board.Height - 4; y >= 0; y--)
+                    for (int y = board.Height - 1 - linesToRemove; y >= 0; y--)
                     {
                         for (int x = 0; x < board.Width; x++)
                         {
-                            board.Grid[y + 3, x] = board.Grid[y, x];
+                            board.Grid[y + linesToRemove, x] = board.Grid[y, x];
                         }
                     }
-                    for (int y = 0; y < 3; y++)
+                    for (int y = 0; y < linesToRemove; y++)
                     {
                         for (int x = 0; x < board.Width; x++)
                         {

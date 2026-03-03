@@ -28,6 +28,35 @@ namespace MaxFunkTetris2024.Tests
             Assert.True(TestHelpers.AreShapesEqual(original, tetromino.Shape));
         }
 
+        [Fact]
+        [Trait("Category", "Unit")]
+        public void Rotate_ChangesDimensions_ForNonSquareShapes()
+        {
+            var tetromino = TestHelpers.CreateTetromino(1); // I-форма (1x4 изначально)
+            int initialWidth = tetromino.Shape.GetLength(1);
+            int initialHeight = tetromino.Shape.GetLength(0);
+
+            Assert.Equal(4, initialWidth);
+            Assert.Equal(1, initialHeight);
+
+            tetromino.Rotate();
+
+            int rotatedWidth = tetromino.Shape.GetLength(1);
+            int rotatedHeight = tetromino.Shape.GetLength(0);
+
+            Assert.Equal(1, rotatedWidth);
+            Assert.Equal(4, rotatedHeight);
+
+            // Проверка второго вращения
+            tetromino.Rotate();
+
+            int rotatedTwiceWidth = tetromino.Shape.GetLength(1);
+            int rotatedTwiceHeight = tetromino.Shape.GetLength(0);
+
+            Assert.Equal(4, rotatedTwiceWidth);
+            Assert.Equal(1, rotatedTwiceHeight);
+        }
+
         [Theory]
         [InlineData(0)]
         [InlineData(1)]
