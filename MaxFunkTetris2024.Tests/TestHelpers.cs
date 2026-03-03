@@ -5,21 +5,21 @@ namespace MaxFunkTetris2024.Tests
     internal static class TestHelpers
     {
         // Фабрика для создания игрового поля с заданными размерами
-        internal static Program.GameBoard CreateBoard(int width, int height)
+        internal static GameBoard CreateBoard(int width, int height)
         {
-            return new Program.GameBoard(width, height);
+            return new GameBoard(width, height);
         }
 
         // Стандартная доска 10x20 для большинства тестов
-        internal static Program.GameBoard CreateDefaultBoard()
+        internal static GameBoard CreateDefaultBoard()
         {
             return CreateBoard(10, 20);
         }
 
         // Фабрика для получения тетрамино по индексу формы
-        internal static Program.Tetromino CreateTetromino(int shapeIndex)
+        internal static Tetromino CreateTetromino(int shapeIndex)
         {
-            return new Program.Tetromino(shapeIndex);
+            return new Tetromino(shapeIndex);
         }
 
         // Утилита для поклеточного сравнения двумерных массивов формы
