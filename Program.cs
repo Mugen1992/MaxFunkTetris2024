@@ -10,9 +10,17 @@ namespace MaxFunkTetris2024
         MainMenu,
         Help,
         Settings,
+        Leaderboard,
         Playing,
         Paused,
         GameOver
+    }
+
+    public enum PowerUpType
+    {
+        None,
+        Bomb,       // Очищает 3 нижних ряда
+        Freeze      // Замедляет падение на несколько ходов
     }
 
     // Уровни сложности для настройки скорости игры
@@ -279,6 +287,12 @@ namespace MaxFunkTetris2024
             public const int RightPanelWidth = 28;
             public const int RightPanelHeight = 9;
 
+            public const int NextPanelWidth = 16;
+            public const int NextPanelHeight = 6;
+
+            public const int InventoryPanelWidth = 16;
+            public const int InventoryPanelHeight = 5;
+
             // Координаты подписей статистики
             public static int StatsLabelX => LeftPanelX + 2;
             public static int StatsValueX => LeftPanelX + LeftPanelWidth - 7; // Сдвигаем левее, чтобы 6-значные числа не затирали рамку
@@ -289,6 +303,12 @@ namespace MaxFunkTetris2024
             // Координаты панелей, зависящие от ширины поля
             public static int GetInfoPanelX(int boardWidth) => BoardOffsetX + boardWidth + PanelPadding;
             public static int InfoPanelY => LeftPanelY;
+
+            public static int GetNextPanelX(int boardWidth) => GetInfoPanelX(boardWidth);
+            public static int GetNextPanelY() => InfoPanelY + RightPanelHeight + 1;
+
+            public static int GetInventoryPanelX(int boardWidth) => GetNextPanelX(boardWidth);
+            public static int GetInventoryPanelY() => GetNextPanelY() + NextPanelHeight + 1;
         }
 
         public static class UiTheme
@@ -385,8 +405,20 @@ namespace MaxFunkTetris2024
                 Console.SetCursorPosition(infoPanelX + 2, UiLayout.InfoPanelY + 7);
                 Console.Write("Enter — подтверждение");
 
+                int nextPanelX = UiLayout.GetNextPanelX(boardWidth);
+                int nextPanelY = UiLayout.GetNextPanelY();
+                DrawBox(nextPanelX, nextPanelY, UiLayout.NextPanelWidth, UiLayout.NextPanelHeight, " NEXT ");
+
+                int inventoryPanelX = UiLayout.GetInventoryPanelX(boardWidth);
+                int inventoryPanelY = UiLayout.GetInventoryPanelY();
+                DrawBox(inventoryPanelX, inventoryPanelY, UiLayout.InventoryPanelWidth, UiLayout.InventoryPanelHeight, " ITEM ");
+
+                Console.SetCursorPosition(infoPanelX + 2, UiLayout.InfoPanelY + 8);
+                Console.Write("B — исп. бонус");
+
                 Console.ForegroundColor = previousColor;
             }
+
         }
 
         public static class UiStatsRenderer
@@ -408,6 +440,78 @@ namespace MaxFunkTetris2024
 
                 Console.ForegroundColor = previousColor;
             }
+
+            public static void RenderNextTetromino(Tetromino nextTetromino, int boardWidth)
+            {
+                int panelX = UiLayout.GetNextPanelX(boardWidth);
+                int panelY = UiLayout.GetNextPanelY();
+
+                ConsoleColor previousColor = Console.ForegroundColor;
+                Console.ForegroundColor = UiTheme.ValueColor;
+
+                // Очистка старой фигуры (просто закрашиваем пробелами внутреннюю область)
+                for (int y = 0; y < 4; y++)
+                {
+                    Console.SetCursorPosition(panelX + 2, panelY + 1 + y);
+                    Console.Write(new string(' ', UiLayout.NextPanelWidth - 4));
+                }
+
+                if (nextTetromino != null)
+                {
+                    // Центрируем фигуру внутри панели
+                    int shapeWidth = nextTetromino.Shape.GetLength(1);
+                    int shapeHeight = nextTetromino.Shape.GetLength(0);
+                    int offsetX = (UiLayout.NextPanelWidth - shapeWidth) / 2;
+                    int offsetY = (UiLayout.NextPanelHeight - shapeHeight) / 2;
+
+                    for (int i = 0; i < shapeHeight; i++)
+                    {
+                        for (int j = 0; j < shapeWidth; j++)
+                        {
+                            if (nextTetromino.Shape[i, j] == 1)
+                            {
+                                Console.SetCursorPosition(panelX + offsetX + j, panelY + offsetY + i);
+                                Console.Write('█');
+                            }
+                        }
+                    }
+                }
+
+                Console.ForegroundColor = previousColor;
+            }
+
+            public static void RenderInventory(PowerUpType currentPowerUp, int boardWidth)
+            {
+                int panelX = UiLayout.GetInventoryPanelX(boardWidth);
+                int panelY = UiLayout.GetInventoryPanelY();
+
+                ConsoleColor previousColor = Console.ForegroundColor;
+                Console.ForegroundColor = UiTheme.ValueColor;
+
+                // Очистка старого названия
+                Console.SetCursorPosition(panelX + 2, panelY + 2);
+                Console.Write(new string(' ', UiLayout.InventoryPanelWidth - 4));
+
+                Console.SetCursorPosition(panelX + 2, panelY + 2);
+                switch (currentPowerUp)
+                {
+                    case PowerUpType.Bomb:
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.Write("  [ BOMB ]  ");
+                        break;
+                    case PowerUpType.Freeze:
+                        Console.ForegroundColor = ConsoleColor.Cyan;
+                        Console.Write(" [ FREEZE ] ");
+                        break;
+                    case PowerUpType.None:
+                    default:
+                        Console.ForegroundColor = ConsoleColor.DarkGray;
+                        Console.Write("  ( empty ) ");
+                        break;
+                }
+
+                Console.ForegroundColor = previousColor;
+            }
         }
 
         public class Game
@@ -415,6 +519,7 @@ namespace MaxFunkTetris2024
             // Инициализируем через null!-заглушку, т.к. реальные значения задаются в ResetGame/SpawnNewTetromino
             private GameBoard board = null!;
             private Tetromino currentTetromino = null!;
+            private Tetromino nextTetromino = null!;
             private Random random;
             private int _score;
             private int _tick; // Счётчик кадров для управления падением
@@ -433,9 +538,15 @@ namespace MaxFunkTetris2024
 
             private Difficulty _difficulty; // Текущая сложность игры
 
+            private PowerUpType _currentPowerUp; // Текущий бонус в инвентаре
+            private int _freezeTicksRemaining; // Оставшееся время заморозки
+
             private readonly string[] _difficultyOptions = { "Easy", "Normal", "Hard" }; // Подписи пунктов сложности
 
-            private readonly string[] _mainMenuItems = { "Start", "Help", "Settings", "Exit" }; // Подписи пунктов меню
+            private readonly string[] _mainMenuItems = { "Start", "Leaderboard", "Help", "Settings", "Exit" }; // Подписи пунктов меню
+
+            private bool _leaderboardDrawn; // Флаг для одноразовой отрисовки экрана лидерборда
+            private const string HighscoreFilePath = "highscores.txt";
 
             // Простейшая метрика кадра для диагностики производительности
             private readonly Stopwatch _frameStopwatch = new();
@@ -459,6 +570,7 @@ namespace MaxFunkTetris2024
                 _pausedDrawn = false;
                 _helpDrawn = false;
                 _settingsDrawn = false;
+                _leaderboardDrawn = false;
                 _mainMenuSelectedIndex = 0;
             }
 
@@ -466,10 +578,13 @@ namespace MaxFunkTetris2024
             private void ResetGame()
             {
                 board = new GameBoard(_width, _height);
+                nextTetromino = CreateNewTetromino();
                 currentTetromino = CreateNewTetromino();
                 _score = 0;
                 _tick = 0; // Обнуляем счётчик кадров при запуске новой игры
                 _linesCleared = 0;
+                _currentPowerUp = PowerUpType.None;
+                _freezeTicksRemaining = 0;
                 _dropInterval = GetDropInterval(_difficulty); // Применяем скорость падения под выбранную сложность
             }
 
@@ -534,6 +649,9 @@ namespace MaxFunkTetris2024
                     case GameState.MainMenu:
                         HandleInputMainMenu();
                         break;
+                    case GameState.Leaderboard:
+                        HandleInputLeaderboard();
+                        break;
                     case GameState.Help:
                         HandleInputHelp();
                         break;
@@ -590,6 +708,9 @@ namespace MaxFunkTetris2024
                     case GameState.MainMenu:
                         RenderMainMenu();
                         break;
+                    case GameState.Leaderboard:
+                        RenderLeaderboard();
+                        break;
                     case GameState.Help:
                         RenderHelp();
                         break;
@@ -643,15 +764,19 @@ namespace MaxFunkTetris2024
                             UiFrameRenderer.DrawStaticFrame(board.Width, board.Height); // Рисуем статический каркас при входе в игру
                             break;
                         case 1:
+                            _state = GameState.Leaderboard;
+                            _leaderboardDrawn = false;
+                            break;
+                        case 2:
                             _state = GameState.Help;
                             _helpDrawn = false;
                             break;
-                        case 2:
+                        case 3:
                             _state = GameState.Settings;
                             _settingsDrawn = false;
                             _settingsSelectedIndex = (int)_difficulty; // Подсветка текущей сложности при входе
                             break;
-                        case 3:
+                        case 4:
                             Console.Clear();
                             Console.ResetColor();
                             Console.CursorVisible = true;
@@ -691,7 +816,52 @@ namespace MaxFunkTetris2024
                         _state = GameState.Paused;
                         _pausedDrawn = false;
                         break;
+                    case ConsoleKey.B:
+                        UsePowerUp();
+                        break;
                 }
+            }
+
+            // Использование текущего бонуса
+            private void UsePowerUp()
+            {
+                if (_currentPowerUp == PowerUpType.None) return;
+
+                if (_currentPowerUp == PowerUpType.Bomb)
+                {
+                    // Удаляем три нижние строки
+                    for (int i = 0; i < 3; i++)
+                    {
+                        for (int x = 0; x < board.Width; x++)
+                        {
+                            board.Grid[board.Height - 1 - i, x] = 0;
+                        }
+                    }
+                    // После очистки нижних трех строк сдвигаем всё вниз
+                    for (int y = board.Height - 4; y >= 0; y--)
+                    {
+                        for (int x = 0; x < board.Width; x++)
+                        {
+                            board.Grid[y + 3, x] = board.Grid[y, x];
+                        }
+                    }
+                    for (int y = 0; y < 3; y++)
+                    {
+                        for (int x = 0; x < board.Width; x++)
+                        {
+                            board.Grid[y, x] = 0;
+                        }
+                    }
+
+                    _score += 150; // Бонус за использование бомбы
+                }
+                else if (_currentPowerUp == PowerUpType.Freeze)
+                {
+                    // Заморозка: даем 100 тиков (около 3 секунд) медленного падения
+                    _freezeTicksRemaining = 100;
+                }
+
+                _currentPowerUp = PowerUpType.None; // Бонус потрачен
             }
 
             // Ввод в паузе: продолжить игру или выйти в меню
@@ -788,8 +958,21 @@ namespace MaxFunkTetris2024
                 }
 
                 Console.ReadKey(true);
+                SaveHighScore(_score);
                 _state = GameState.MainMenu;
                 _mainMenuDrawn = false; // При возвращении в меню разрешаем перерисовать экран один раз
+            }
+
+            private void HandleInputLeaderboard()
+            {
+                if (!Console.KeyAvailable) return;
+                ConsoleKey key = Console.ReadKey(true).Key;
+                if (key == ConsoleKey.Enter || key == ConsoleKey.Escape || key == ConsoleKey.Spacebar)
+                {
+                    _state = GameState.MainMenu;
+                    _mainMenuDrawn = false;
+                    _leaderboardDrawn = false;
+                }
             }
 
             // Обновление в главном меню пока не требуется
@@ -814,7 +997,15 @@ namespace MaxFunkTetris2024
             private void UpdatePlaying()
             {
                 _tick++; // Увеличиваем счётчик кадров
-                bool shouldFall = _tick % _dropInterval == 0; // Проверяем, пора ли падать
+
+                int currentInterval = _dropInterval;
+                if (_freezeTicksRemaining > 0)
+                {
+                    currentInterval = _dropInterval * 3; // Замедляем падение в 3 раза
+                    _freezeTicksRemaining--;
+                }
+
+                bool shouldFall = _tick % currentInterval == 0; // Проверяем, пора ли падать
                 if (!shouldFall) return; // Если ещё рано, выходим
 
                 if (!MoveTetrominoDown())
@@ -825,6 +1016,12 @@ namespace MaxFunkTetris2024
                     {
                         _linesCleared += clearedLines;
                         _score += clearedLines * 100; // Начисляем очки за линии
+
+                        // Логика получения бонуса: если убрано 4 линии за раз (Тетрис) - даем бонус
+                        if (clearedLines >= 4 && _currentPowerUp == PowerUpType.None)
+                        {
+                            _currentPowerUp = random.Next(2) == 0 ? PowerUpType.Bomb : PowerUpType.Freeze;
+                        }
                     }
 
                     if (!SpawnNewTetromino())
@@ -885,6 +1082,50 @@ namespace MaxFunkTetris2024
 
                 Console.ForegroundColor = previousColor;
                 _mainMenuDrawn = true;
+            }
+
+            // Отрисовка экрана лидерборда
+            private void RenderLeaderboard()
+            {
+                if (_leaderboardDrawn)
+                    return;
+
+                Console.Clear();
+                Console.ResetColor();
+
+                int boxWidth = 50;
+                int boxHeight = 12;
+                int boxX = UiLayout.LeftPanelX;
+                int boxY = UiLayout.LeftPanelY;
+
+                UiFrameRenderer.DrawBox(boxX, boxY, boxWidth, boxHeight, " LEADERBOARD ");
+
+                ConsoleColor previousColor = Console.ForegroundColor;
+                Console.ForegroundColor = UiTheme.InfoColor;
+
+                var highScores = LoadHighScores();
+
+                Console.SetCursorPosition(boxX + 3, boxY + 2);
+                Console.Write("Топ рекордов:");
+
+                for (int i = 0; i < Math.Min(highScores.Count, 5); i++)
+                {
+                    Console.SetCursorPosition(boxX + 5, boxY + 4 + i);
+                    Console.Write($"{i + 1}. {highScores[i]}");
+                }
+
+                if (highScores.Count == 0)
+                {
+                    Console.SetCursorPosition(boxX + 5, boxY + 4);
+                    Console.Write("Рекордов пока нет.");
+                }
+
+                Console.ForegroundColor = UiTheme.LabelColor;
+                Console.SetCursorPosition(boxX + 3, boxY + boxHeight - 2);
+                Console.Write("Enter или Esc — назад.");
+
+                Console.ForegroundColor = previousColor;
+                _leaderboardDrawn = true;
             }
 
             // Отрисовка экрана помощи
@@ -970,6 +1211,8 @@ namespace MaxFunkTetris2024
             {
                 GameRenderer.Render(board, currentTetromino);
                 UiStatsRenderer.RenderStats(_score, CurrentLevel, _linesCleared);
+                UiStatsRenderer.RenderNextTetromino(nextTetromino, board.Width);
+                UiStatsRenderer.RenderInventory(_currentPowerUp, board.Width);
             }
 
 #if DEBUG
@@ -1079,8 +1322,52 @@ namespace MaxFunkTetris2024
             // Метод для создания нового тетромино
             private bool SpawnNewTetromino()
             {
-                currentTetromino = new Tetromino(random.Next(7));
+                currentTetromino = nextTetromino;
+                nextTetromino = CreateNewTetromino();
                 return !board.IsCollision(currentTetromino);
+            }
+
+            // Загрузка рекордов
+            private System.Collections.Generic.List<int> LoadHighScores()
+            {
+                var scores = new System.Collections.Generic.List<int>();
+                if (System.IO.File.Exists(HighscoreFilePath))
+                {
+                    try
+                    {
+                        var lines = System.IO.File.ReadAllLines(HighscoreFilePath);
+                        foreach (var line in lines)
+                        {
+                            if (int.TryParse(line, out int score))
+                            {
+                                scores.Add(score);
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // Игнорируем ошибки чтения файла
+                    }
+                }
+                scores.Sort((a, b) => b.CompareTo(a));
+                return scores;
+            }
+
+            // Сохранение рекорда
+            private void SaveHighScore(int score)
+            {
+                if (score <= 0) return;
+                var scores = LoadHighScores();
+                scores.Add(score);
+                scores.Sort((a, b) => b.CompareTo(a));
+                try
+                {
+                    System.IO.File.WriteAllLines(HighscoreFilePath, System.Linq.Enumerable.Select(scores.Take(5), s => s.ToString()));
+                }
+                catch
+                {
+                    // Игнорируем ошибки записи
+                }
             }
         }
 
