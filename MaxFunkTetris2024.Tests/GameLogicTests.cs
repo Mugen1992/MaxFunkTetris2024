@@ -6,6 +6,7 @@ using Xunit;
 namespace MaxFunkTetris2024.Tests
 {
     // Юнит-тесты логики игры без запуска консольного цикла
+    [Collection("Sequential")]
     public class GameLogicTests
     {
         [Fact]
@@ -74,7 +75,14 @@ namespace MaxFunkTetris2024.Tests
             MethodInfo? updatePlaying = typeof(Game).GetMethod("UpdatePlaying", BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.NotNull(updatePlaying);
 
-            updatePlaying!.Invoke(game, Array.Empty<object>());
+            try
+            {
+                updatePlaying!.Invoke(game, Array.Empty<object>());
+            }
+            catch (TargetInvocationException ex) when (ex.InnerException is System.IO.IOException || ex.InnerException is ObjectDisposedException)
+            {
+                // Игнорируем исключения консоли
+            }
 
             Assert.Equal(100, GetPrivateField<int>(game, "_score"));
             Assert.Equal(1, GetPrivateField<int>(game, "_linesCleared"));
@@ -161,7 +169,14 @@ namespace MaxFunkTetris2024.Tests
 
             MethodInfo? updatePlaying = typeof(Game).GetMethod("UpdatePlaying", BindingFlags.NonPublic | BindingFlags.Instance);
 
-            updatePlaying!.Invoke(game, Array.Empty<object>());
+            try
+            {
+                updatePlaying!.Invoke(game, Array.Empty<object>());
+            }
+            catch (TargetInvocationException ex) when (ex.InnerException is System.IO.IOException || ex.InnerException is ObjectDisposedException)
+            {
+                // Игнорируем исключения консоли
+            }
 
             Assert.Equal(4, GetPrivateField<int>(game, "_linesCleared"));
             // Бонус должен быть выдан

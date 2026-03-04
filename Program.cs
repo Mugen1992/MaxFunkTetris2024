@@ -12,17 +12,22 @@ namespace MaxFunkTetris2024
         static void Main(string[] args)
         {
             // На старте включаем UTF-8, чтобы рамки и символы отображались корректно
-            Console.OutputEncoding = Encoding.UTF8;
+            try { Console.OutputEncoding = Encoding.UTF8; } catch (System.IO.IOException) { }
 
             // Один раз предупреждаем, если окно слишком маленькое для интерфейса
-            if (Console.WindowWidth < MinConsoleWidth || Console.WindowHeight < MinConsoleHeight)
+            try
             {
-                Console.Clear();
-                Console.WriteLine($"[WARN] Current console size is {Console.WindowWidth}x{Console.WindowHeight}.");
-                Console.WriteLine($"Recommended minimum size is {MinConsoleWidth}x{MinConsoleHeight}.");
-                Console.WriteLine("Please resize the window and press any key to continue...");
-                Console.ReadKey(true);
+                if (Console.WindowWidth < MinConsoleWidth || Console.WindowHeight < MinConsoleHeight)
+                {
+                    Console.Clear();
+                    Console.WriteLine($"[WARN] Current console size is {Console.WindowWidth}x{Console.WindowHeight}.");
+                    Console.WriteLine($"Recommended minimum size is {MinConsoleWidth}x{MinConsoleHeight}.");
+                    Console.WriteLine("Please resize the window and press any key to continue...");
+                    Console.ReadKey(true);
+                }
             }
+            catch (System.IO.IOException) { }
+            catch (InvalidOperationException) { } // В тестах без консоли свойства WindowWidth падают
 
             Game game = new Game(15, 20);
             game.Run();

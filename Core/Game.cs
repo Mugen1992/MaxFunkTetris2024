@@ -118,12 +118,16 @@ namespace MaxFunkTetris2024
         }
 
         // Основной игровой цикл со стейт-машиной
+        // Свойство для выхода из цикла в тестах
+        public bool IsRunning { get; set; } = true;
+
         public void Run()
         {
             const int frameDelayMs = 30; // ~33 FPS фиксированная задержка кадра
             // Прячем курсор один раз перед стартом игрового цикла, чтобы не мешал анимации
-            Console.CursorVisible = false;
-            while (true)
+            try { Console.CursorVisible = false; } catch (System.IO.IOException) { }
+
+            while (IsRunning)
             {
                 // Стартуем замер длительности кадра
                 _frameStopwatch.Restart();
